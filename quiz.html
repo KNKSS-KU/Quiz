@@ -360,6 +360,50 @@ function submit(){
   document.getElementById('c1').textContent = `✓ ถูก ${score} ข้อ`;
   document.getElementById('c2').textContent = `✗ ผิด ${10-score} ข้อ`;
   res.scrollIntoView({behavior:'smooth'});
+
+  // ส่งข้อมูลไป Google Sheets
+  sendToGoogleSheets(score, qs);
+}
+
+// ============================================================
+// ตั้งค่า: วาง URL ของ Google Apps Script ตรงนี้
+// (ดูขั้นตอนใน README หรือ SETUP_GUIDE.md)
+// ============================================================
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw_RvKIPG1u7IMA1wWKs7P4Sk9-kb8Xq1u9yzz81rZL_OU_kQnXCy6haR1LBy4W4aLy/exec';
+
+function sendToGoogleSheets(score, qs) {
+  const name  = document.getElementById('name').value.trim()  || '(ไม่ระบุ)';
+  const biz   = document.getElementById('biz').value.trim()   || '(ไม่ระบุ)';
+  const prior = document.getElementById('prior').value.trim() || '(ไม่ระบุ)';
+
+  // เก็บคำตอบแต่ละข้อ
+  const answers = {};
+  qs.forEach(q => {
+    const sel = document.querySelector(`input[name="${q}"]:checked`);
+    answers[q] = sel ? sel.value : '-';
+  });
+
+  const payload = {
+    timestamp : new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
+    name, biz, prior, score,
+    pct       : score * 10,
+    level     : score >= 8 ? 'ดีเยี่ยม' : score >= 6 ? 'ผ่าน' : 'ต้องทบทวน',
+    ...answers   // q1:'c', q2:'b', ...
+  };
+
+  if (!SHEET_URL || SHEET_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    console.warn('[Quiz] ยังไม่ได้ตั้งค่า SHEET_URL — ข้ามการบันทึก');
+    return;
+  }
+
+  fetch(SHEET_URL, {
+    method  : 'POST',
+    mode    : 'no-cors',          // จำเป็นสำหรับ Apps Script
+    headers : { 'Content-Type': 'application/json' },
+    body    : JSON.stringify(payload)
+  })
+  .then(() => console.log('[Quiz] ส่งข้อมูลแล้ว ✅'))
+  .catch(err => console.error('[Quiz] ส่งไม่สำเร็จ:', err));
 }
 </script>
 </body>
