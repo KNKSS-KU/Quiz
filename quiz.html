@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แบบทดสอบหลังอบรม — AI เครื่องมือใหม่ของผู้ประกอบการ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --navy:#003366; --sky:#66B2FF; --green:#059669; --red:#DC2626; --gold:#F59E0B; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:'Sarabun',sans-serif; background:#F0F4F8; color:#1e293b; }
+
+.header{ background:var(--navy); padding:24px 32px; }
+.header h1{ font-size:1.3rem; font-weight:800; color:white; }
+.header p{ font-size:0.85rem; color:var(--sky); margin-top:4px; }
+
+.wrap{ max-width:680px; margin:28px auto; padding:0 18px 60px; }
+
+/* INTRO */
+.intro{ background:white; border-radius:14px; padding:22px 26px; margin-bottom:20px; border:1px solid #E2E8F0; }
+.intro h2{ font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:12px; }
+.fields{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.field{ display:flex; flex-direction:column; gap:4px; }
+.field:first-child{ grid-column:1/-1; }
+.field label{ font-size:0.72rem; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.06em; }
+.field input{
+  border:1.5px solid #E2E8F0; border-radius:8px; padding:9px 13px;
+  font-family:'Sarabun',sans-serif; font-size:0.95rem;
+}
+.field input:focus{ outline:none; border-color:var(--sky); }
+
+/* QUESTION */
+.qcard{
+  background:white; border-radius:14px; padding:22px 24px;
+  margin-bottom:14px; border:1px solid #E2E8F0;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+}
+.qcard.fun{ border-left:4px solid var(--gold); }
+.qtop{ display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
+.qnum{
+  background:var(--navy); color:white; min-width:30px; height:30px;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:0.82rem; flex-shrink:0; margin-top:1px;
+}
+.qnum.fun{ background:var(--gold); color:white; }
+.qtext{ font-size:0.97rem; font-weight:700; line-height:1.5; }
+.fun-tag{ font-size:0.7rem; background:#FEF3C7; color:#92400E; padding:2px 8px; border-radius:10px; font-weight:700; display:inline-block; margin-left:6px; }
+
+.opts{ display:flex; flex-direction:column; gap:7px; }
+.opt{
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px; border-radius:9px;
+  border:1.5px solid #E2E8F0; cursor:pointer;
+  font-size:0.9rem; transition:all 0.15s;
+}
+.opt:hover{ border-color:var(--sky); background:#F0F8FF; }
+.opt input{ accent-color:var(--navy); width:15px; height:15px; flex-shrink:0; }
+.opt.correct{ border-color:var(--green); background:#F0FDF4; font-weight:700; color:#065F46; }
+.opt.wrong{ border-color:var(--red); background:#FFF0F0; color:#991B1B; }
+.opt.reveal{ border-color:var(--green); background:#F0FDF4; }
+
+.explain{
+  margin-top:10px; padding:10px 14px; border-radius:8px;
+  font-size:0.84rem; line-height:1.6; display:none;
+}
+.explain.ok{ background:#F0FDF4; border:1px solid #A7F3D0; color:#065F46; }
+.explain.no{ background:#FFF0F0; border:1px solid #FCA5A5; color:#991B1B; }
+
+/* SUBMIT */
+.sub-btn{
+  width:100%; padding:15px; background:var(--navy); color:white;
+  border:none; border-radius:12px; font-family:'Sarabun',sans-serif;
+  font-size:1.05rem; font-weight:800; cursor:pointer;
+}
+.sub-btn:hover{ background:#004080; }
+.sub-btn:disabled{ background:#94A3B8; cursor:not-allowed; }
+
+/* RESULT */
+.result{
+  background:white; border-radius:14px; padding:30px 24px;
+  text-align:center; border:1px solid #E2E8F0; display:none;
+  margin-bottom:16px;
+}
+.circle{
+  width:110px; height:110px; border-radius:50%;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  margin:0 auto 14px; border:5px solid;
+}
+.circle .big{ font-size:2rem; font-weight:800; }
+.circle .sm{ font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+.rtitle{ font-size:1.25rem; font-weight:800; margin-bottom:6px; }
+.rsub{ font-size:0.88rem; color:#64748B; margin-bottom:16px; line-height:1.6; }
+.rbadge{ display:inline-block; padding:7px 22px; border-radius:20px; font-weight:800; font-size:0.88rem; }
+.rrow{ display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+.rchip{ padding:7px 16px; border-radius:8px; font-size:0.84rem; font-weight:700; }
+.print-btn{
+  width:100%; padding:11px; background:#F1F5F9; color:var(--navy);
+  border:1.5px solid #E2E8F0; border-radius:10px;
+  font-family:'Sarabun',sans-serif; font-size:0.92rem; font-weight:700;
+  cursor:pointer; margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📝 แบบทดสอบหลังการอบรม</h1>
+  <p>AI เครื่องมือใหม่ของผู้ประกอบการ  •  คณะเศรษฐศาสตร์ ศรีราชา  •  29 พฤษภาคม 2569</p>
+</div>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>ข้อมูลผู้เข้าอบรม (10 ข้อ — ใช้เวลาประมาณ 8 นาที)</h2>
+    <div class="fields">
+      <div class="field"><label>ชื่อ-นามสกุล</label><input id="name" type="text" placeholder="กรอกชื่อ-นามสกุล"></div>
+      <div class="field"><label>ประเภทธุรกิจของท่าน</label><input id="biz" type="text" placeholder="เช่น ร้านอาหาร / เกษตร / บริการ"></div>
+      <div class="field"><label>เคยใช้ AI มาก่อนไหม?</label><input id="prior" type="text" placeholder="เช่น ไม่เคย / เคยบ้าง / ใช้ประจำ"></div>
+    </div>
+  </div>
+
+  <!-- Q1 -->
+  <div class="qcard" id="q1">
+    <div class="qtop"><div class="qnum">1</div>
+      <div class="qtext">ChatGPT คือ AI ที่พัฒนาโดยบริษัทใด?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q1" value="a"> Google</label>
+      <label class="opt"><input type="radio" name="q1" value="b"> Microsoft</label>
+      <label class="opt"><input type="radio" name="q1" value="c"> OpenAI</label>
+      <label class="opt"><input type="radio" name="q1" value="d"> Meta</label>
+    </div>
+    <div class="explain" id="e1"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="qcard" id="q2">
+    <div class="qtop"><div class="qnum">2</div>
+      <div class="qtext">Gemini คือ AI ของบริษัทใด และเข้าใช้งานได้ที่ไหน?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q2" value="a"> Apple — เปิดผ่าน iPhone</label>
+      <label class="opt"><input type="radio" name="q2" value="b"> Google — เปิดผ่าน gemini.google.com</label>
+      <label class="opt"><input type="radio" name="q2" value="c"> Amazon — เปิดผ่าน AWS Console</label>
+      <label class="opt"><input type="radio" name="q2" value="d"> Samsung — เปิดผ่านแอปมือถือ</label>
+    </div>
+    <div class="explain" id="e2"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="qcard" id="q3">
+    <div class="qtop"><div class="qnum">3</div>
+      <div class="qtext">ข้อใดถูกต้องที่สุดเกี่ยวกับ ChatGPT แบบฟรี?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q3" value="a"> ใช้ได้เฉพาะนักเรียนและนักศึกษาเท่านั้น</label>
+      <label class="opt"><input type="radio" name="q3" value="b"> ใช้งานได้ฟรี แต่มีจำนวนครั้งที่จำกัดต่อวัน และช้ากว่าแบบจ่ายเงิน</label>
+      <label class="opt"><input type="radio" name="q3" value="c"> ฟรีใช้ได้ทุกฟีเจอร์เหมือนแบบจ่ายเงินทุกอย่าง</label>
+      <label class="opt"><input type="radio" name="q3" value="d"> ต้องสมัครสมาชิกจ่ายเงินก่อนถึงจะใช้ได้</label>
+    </div>
+    <div class="explain" id="e3"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="qcard" id="q4">
+    <div class="qtop"><div class="qnum">4</div>
+      <div class="qtext">"Prompt" ในการใช้งาน AI หมายถึงอะไร?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q4" value="a"> ราคาค่าสมัครใช้งาน AI</label>
+      <label class="opt"><input type="radio" name="q4" value="b"> ชื่อของโปรแกรม AI</label>
+      <label class="opt"><input type="radio" name="q4" value="c"> คำสั่งหรือข้อความที่เราพิมพ์บอก AI ว่าต้องการอะไร</label>
+      <label class="opt"><input type="radio" name="q4" value="d"> ผลลัพธ์ที่ AI สร้างออกมา</label>
+    </div>
+    <div class="explain" id="e4"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="qcard" id="q5">
+    <div class="qtop"><div class="qnum">5</div>
+      <div class="qtext">ถ้าคุยกับ ChatGPT ไปนานๆ แล้วคำตอบเริ่ม "เบลอ" หรือ "ลืม" สิ่งที่คุยไปก่อนหน้า ควรทำอะไร?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q5" value="a"> ปิดแล้วเปิดคอมพิวเตอร์ใหม่</label>
+      <label class="opt"><input type="radio" name="q5" value="b"> อัปเกรดเป็นแบบจ่ายเงินก่อน</label>
+      <label class="opt"><input type="radio" name="q5" value="c"> เริ่ม chat ใหม่ เพื่อ "รีเซ็ต" ความจำของ AI</label>
+      <label class="opt"><input type="radio" name="q5" value="d"> รอให้ AI หยุดพักก่อนค่อยถามต่อ</label>
+    </div>
+    <div class="explain" id="e5"></div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="qcard" id="q6">
+    <div class="qtop"><div class="qnum">6</div>
+      <div class="qtext">ทำไม AI จึงให้คำตอบที่แตกต่างกันบ้างในแต่ละครั้งที่ถามคำถามเดิม?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q6" value="a"> เพราะ AI มีอารมณ์ขึ้นลงเหมือนคน</label>
+      <label class="opt"><input type="radio" name="q6" value="b"> เพราะ AI ออกแบบให้มีความสุ่ม (probability) ในการเลือกคำตอบ ทำให้คำตอบไม่ซ้ำกันทุกครั้ง</label>
+      <label class="opt"><input type="radio" name="q6" value="c"> เพราะ internet ช้าทำให้ข้อมูลหาย</label>
+      <label class="opt"><input type="radio" name="q6" value="d"> เพราะเราพิมพ์ prompt ผิดพลาด</label>
+    </div>
+    <div class="explain" id="e6"></div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="qcard" id="q7">
+    <div class="qtop"><div class="qnum">7</div>
+      <div class="qtext">AI อย่าง ChatGPT หรือ Gemini "อาจให้ข้อมูลผิดได้" ข้อใดอธิบายสิ่งนี้ได้ถูกต้องที่สุด?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q7" value="a"> AI โกหกเพราะถูกโปรแกรมให้ตอบผิดบางครั้ง</label>
+      <label class="opt"><input type="radio" name="q7" value="b"> AI บางทีสร้างข้อมูลที่ฟังดูน่าเชื่อแต่ไม่ถูกต้อง โดยเฉพาะตัวเลขและข้อเท็จจริง ต้องตรวจสอบเสมอ</label>
+      <label class="opt"><input type="radio" name="q7" value="c"> AI ผิดเฉพาะภาษาไทยเท่านั้น</label>
+      <label class="opt"><input type="radio" name="q7" value="d"> AI ผิดเพราะ internet หลุด</label>
+    </div>
+    <div class="explain" id="e7"></div>
+  </div>
+
+  <!-- Q8 — จุดคุ้มทุน -->
+  <div class="qcard" id="q8">
+    <div class="qtop"><div class="qnum">8</div>
+      <div class="qtext">ร้านขนมแม่สมศรี ราคาขาย 80 บาท/ขวด ต้นทุนผันแปร 42 บาท/ขวด ต้นทุนคงที่ 3,500 บาท/เดือน — ต้องขายกี่ขวดต่อเดือนถึงจะไม่ขาดทุน?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q8" value="a"> 44 ขวด</label>
+      <label class="opt"><input type="radio" name="q8" value="b"> 72 ขวด</label>
+      <label class="opt"><input type="radio" name="q8" value="c"> 92 ขวด</label>
+      <label class="opt"><input type="radio" name="q8" value="d"> 115 ขวด</label>
+    </div>
+    <div class="explain" id="e8"></div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="qcard" id="q9">
+    <div class="qtop"><div class="qnum">9</div>
+      <div class="qtext">ข้อใดคือสิ่งที่ AI ช่วยให้ผู้ประกอบการรายเล็ก "เท่าเทียม" กับธุรกิจใหญ่ได้มากขึ้น?</div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q9" value="a"> AI ทำให้สินค้าของ SME มีคุณภาพดีเหมือนแบรนด์ใหญ่โดยอัตโนมัติ</label>
+      <label class="opt"><input type="radio" name="q9" value="b"> AI ทำให้ SME เข้าถึงเครื่องมือด้านการตลาด เขียนโพสต์ ออกแบบ วิเคราะห์ข้อมูล ที่ก่อนหน้านี้ต้องจ้างทีมงานหลายคน</label>
+      <label class="opt"><input type="radio" name="q9" value="c"> AI ช่วยลดราคาสินค้าให้ถูกกว่าคู่แข่งโดยตรง</label>
+      <label class="opt"><input type="radio" name="q9" value="d"> AI ช่วยให้ SME ขอสินเชื่อธนาคารได้ง่ายขึ้น</label>
+    </div>
+    <div class="explain" id="e9"></div>
+  </div>
+
+  <!-- Q10 — SUNO (FUN) -->
+  <div class="qcard fun" id="q10">
+    <div class="qtop"><div class="qnum fun">10</div>
+      <div class="qtext">
+        <span class="fun-tag">🎵 ข้อสนุก!</span><br>
+        วิทยากร demo เว็บ SUNO (suno.com) ในการอบรมวันนี้ — SUNO ใช้ทำอะไร?
+      </div>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q10" value="a"> สร้างวิดีโอโฆษณาสินค้าอัตโนมัติ</label>
+      <label class="opt"><input type="radio" name="q10" value="b"> แต่งเพลงและสร้างเสียงดนตรีจาก prompt ที่เราพิมพ์</label>
+      <label class="opt"><input type="radio" name="q10" value="c"> แปลภาษาไทยเป็นภาษาต่างประเทศ</label>
+      <label class="opt"><input type="radio" name="q10" value="d"> ทำบัญชีรายรับรายจ่ายอัตโนมัติ</label>
+    </div>
+    <div class="explain" id="e10"></div>
+  </div>
+
+  <button class="sub-btn" id="subBtn" onclick="submit()">ส่งคำตอบและดูผล →</button>
+
+  <!-- RESULT -->
+  <div class="result" id="result">
+    <div class="circle" id="circle">
+      <div class="big" id="scoreNum"></div>
+      <div class="sm">คะแนน</div>
+    </div>
+    <div class="rtitle" id="rtitle"></div>
+    <div class="rsub" id="rsub"></div>
+    <div class="rbadge" id="rbadge"></div>
+    <div class="rrow">
+      <div class="rchip" style="background:#F0FDF4;color:#065F46" id="c1"></div>
+      <div class="rchip" style="background:#FFF0F0;color:#991B1B" id="c2"></div>
+    </div>
+    <button class="print-btn" onclick="window.print()">🖨️ พิมพ์ใบผลคะแนน</button>
+  </div>
+
+</div>
+
+<script>
+const ANS = { q1:'c', q2:'b', q3:'b', q4:'c', q5:'c', q6:'b', q7:'b', q8:'c', q9:'b', q10:'b' };
+
+const EXP = {
+  q1:  { ok:'✅ ถูกครับ! ChatGPT พัฒนาโดย OpenAI บริษัท AI สัญชาติอเมริกัน ก่อตั้งปี 2015 ปัจจุบัน Microsoft ลงทุนหลัก',
+          no:'❌ คำตอบคือ OpenAI ครับ ไม่ใช่ Google (Google ทำ Gemini), Microsoft (ลงทุนแต่ไม่ได้ทำ), Meta (ทำ Llama)' },
+  q2:  { ok:'✅ ถูกครับ! Gemini ของ Google เข้าใช้ได้ที่ gemini.google.com ฟรี ใช้ Google Account ที่มีอยู่แล้วได้เลย',
+          no:'❌ Gemini เป็นของ Google เข้าใช้ได้ที่ gemini.google.com ฟรีด้วย Google Account ที่มีอยู่' },
+  q3:  { ok:'✅ ถูกครับ! ChatGPT ฟรีใช้ได้จริง แต่มี limit — ใช้หนักๆ อาจถูกชะลอ และช้ากว่า Plus เดี๋ยวลองแล้วจะเห็นเอง',
+          no:'❌ ChatGPT ฟรีใช้ได้ครับ ไม่ต้องจ่ายเงินก่อน แต่มี limit รายวัน และช้ากว่าแบบจ่ายเงิน (Plus ราคา ~700 บาท/เดือน)' },
+  q4:  { ok:'✅ ถูกครับ! Prompt คือ "คำสั่ง" ที่เราพิมพ์บอก AI — ยิ่งบอกรายละเอียดชัด ผลลัพธ์ยิ่งดีครับ',
+          no:'❌ Prompt คือคำสั่งหรือข้อความที่เราพิมพ์บอก AI ว่าต้องการอะไร — เหมือนบอกพนักงานว่า "ทำอะไร อย่างไร สำหรับใคร"' },
+  q5:  { ok:'✅ ถูกครับ! AI แต่ละ chat มี "ความจำ" จำกัด ถ้า chat ยาวมากๆ AI จะเริ่มลืมตอนต้น วิธีแก้คือเริ่ม chat ใหม่',
+          no:'❌ วิธีที่ถูกคือเริ่ม chat ใหม่ครับ AI แต่ละ conversation มีความจำจำกัด — เหมือน reset กระดานชนวน ไม่ต้องปิดเปิดคอม' },
+  q6:  { ok:'✅ ถูกครับ! AI ใช้ probabilistic model — มีการสุ่มในการเลือกคำ ทำให้คำตอบออกมาหลากหลาย และนี่คือเหตุผลที่ gen รูปเดิมๆ ไม่มีทางเหมือนกันเลย!',
+          no:'❌ AI ไม่มีอารมณ์ครับ สาเหตุจริงๆ คือ AI ใช้ probability ในการสร้างคำตอบ — ทำให้ผลลัพธ์ออกมาไม่ซ้ำกันแต่ละครั้ง' },
+  q7:  { ok:'✅ ถูกครับ! เรียกปรากฏการณ์นี้ว่า "Hallucination" — AI พูดผิดอย่างมั่นใจ โดยเฉพาะตัวเลข วันที่ ชื่อ ต้องตรวจสอบเสมอครับ',
+          no:'❌ AI ไม่ได้ "โกหกตั้งใจ" ครับ แต่บางครั้งสร้างข้อมูลที่ฟังดูน่าเชื่อแต่ผิด เรียกว่า Hallucination — ตัวเลขและข้อเท็จจริงต้องตรวจสอบเสมอ' },
+  q8:  { ok:'✅ ถูกครับ! ใช้สูตร FC ÷ (P − VC) = 3,500 ÷ (80 − 42) = 3,500 ÷ 38 ≈ 92 ขวด/เดือน ขายน้อยกว่า 92 ขวด = ขาดทุนครับ',
+          no:'❌ ใช้สูตร: ต้นทุนคงที่ ÷ (ราคาขาย − ต้นทุนผันแปร) = 3,500 ÷ (80 − 42) = 3,500 ÷ 38 = 92 ขวด/เดือน (ตอบ C)' },
+  q9:  { ok:'✅ ถูกครับ! AI เป็นเหมือน "ทีมงานราคา 700 บาท/เดือน" — เขียนโพสต์ ออกแบบ วิเคราะห์ข้อมูล ทำได้หมด ทำให้ SME แข่งขันได้มากขึ้น',
+          no:'❌ AI ไม่ได้ปรับปรุงตัวสินค้าหรือลดราคาโดยตรง แต่ช่วยให้ SME เข้าถึงเครื่องมือที่ก่อนหน้านี้มีแต่บริษัทใหญ่ใช้ได้' },
+  q10: { ok:'✅ ถูกครับ! 🎵 SUNO แต่งเพลงจาก prompt ที่เราพิมพ์ — พิมพ์ว่า "เพลงโฆษณาน้ำพริกแม่สมศรี สนุกสนาน" ได้เพลงมาทันทีเลยครับ 😄',
+          no:'❌ SUNO (suno.com) เป็น AI แต่งเพลงครับ! แค่พิมพ์ว่าต้องการเพลงแบบไหน เกี่ยวกับอะไร ได้เพลงมาทันทีพร้อมเสียงร้อง 🎵' }
+};
+
+function submit(){
+  const qs = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'];
+  let answered = true;
+  qs.forEach(q => { if(!document.querySelector(`input[name="${q}"]:checked`)) answered = false; });
+  if(!answered){ alert('กรุณาตอบทุกข้อก่อนส่งครับ'); return; }
+
+  let score = 0;
+  qs.forEach(q => {
+    const sel = document.querySelector(`input[name="${q}"]:checked`);
+    const opts = document.querySelectorAll(`#${q} .opt`);
+    const exp = document.getElementById(`e${q.slice(1)}`);
+    const right = sel.value === ANS[q];
+    if(right){ score++; sel.closest('.opt').classList.add('correct'); exp.className='explain ok'; exp.innerHTML=EXP[q].ok; }
+    else {
+      sel.closest('.opt').classList.add('wrong');
+      opts.forEach(o => { if(o.querySelector('input').value === ANS[q]) o.classList.add('reveal'); });
+      exp.className='explain no'; exp.innerHTML=EXP[q].no;
+    }
+    exp.style.display='block';
+    document.querySelectorAll(`input[name="${q}"]`).forEach(r => r.disabled=true);
+  });
+
+  document.getElementById('subBtn').disabled = true;
+  const pct = score * 10;
+  const res = document.getElementById('result');
+  res.style.display = 'block';
+  document.getElementById('scoreNum').textContent = `${score}/10`;
+
+  let col, title, sub, badge, bcss;
+  if(pct >= 80){
+    col='#059669'; title='🎉 ยอดเยี่ยม!';
+    sub='เข้าใจหลักการใช้ AI ในธุรกิจได้ดีมาก\nพร้อมนำไปใช้ได้เลยตั้งแต่วันนี้ครับ';
+    badge='🏆 ผ่านการอบรม — ระดับดีเยี่ยม'; bcss='background:#D1FAE5;color:#065F46';
+  } else if(pct >= 60){
+    col='#D97706'; title='👍 ผ่านเกณฑ์!';
+    sub='มีความเข้าใจพื้นฐานที่ดีแล้ว\nลองนำไปใช้จริงและทบทวนส่วนที่ยังสงสัยได้เลยครับ';
+    badge='✅ ผ่านการอบรม'; bcss='background:#FEF3C7;color:#92400E';
+  } else {
+    col='#DC2626'; title='📚 ลองอีกครั้งนะครับ';
+    sub='ไม่เป็นไรครับ ยังมีวิทยากรให้ถามได้\nลองทบทวนเฉลยแต่ละข้อแล้วลองใช้ AI ดูครับ';
+    badge='📖 แนะนำทบทวนเนื้อหา'; bcss='background:#FEE2E2;color:#991B1B';
+  }
+  const c = document.getElementById('circle');
+  c.style.borderColor = col;
+  document.getElementById('scoreNum').style.color = col;
+  document.getElementById('rtitle').textContent = title;
+  document.getElementById('rsub').textContent = sub;
+  const b = document.getElementById('rbadge');
+  b.textContent = badge; b.style.cssText = bcss;
+  document.getElementById('c1').textContent = `✓ ถูก ${score} ข้อ`;
+  document.getElementById('c2').textContent = `✗ ผิด ${10-score} ข้อ`;
+  res.scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
