@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo AI — วิเคราะห์รีวิว + สร้างโปรแกรมจุดคุ้มทุน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--n:#003366;--nd:#001F40;--nm:#004080;--s:#66B2FF;--sl:#B3D9FF;--g:#059669;--gl:#D1FAE5;--a:#D97706;--al:#FEF3C7;--r:#DC2626;--rl:#FEE2E2;--w:#fff;--bg:#F0F4F8;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:#1e293b;}
+
+/* ── TOP NAV ── */
+.topnav{background:var(--nd);padding:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.topnav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:stretch;}
+.logo{padding:14px 22px;display:flex;align-items:center;gap:10px;border-right:1px solid rgba(255,255,255,.1);}
+.logo span{font-size:1.1rem;font-weight:800;color:var(--w);}
+.logo small{font-size:.75rem;color:var(--sl);display:block;margin-top:1px;}
+.nav-tabs{display:flex;flex:1;}
+.nav-tab{flex:1;padding:0 22px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;border:none;background:none;font-family:'Sarabun',sans-serif;font-size:.92rem;font-weight:700;color:rgba(255,255,255,.55);transition:all .2s;border-bottom:3px solid transparent;text-align:center;}
+.nav-tab:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05);}
+.nav-tab.on{color:var(--w);border-bottom-color:var(--s);background:rgba(102,178,255,.08);}
+.nav-tab .ti{font-size:1.3rem;}
+.nav-tab .ttext{display:flex;flex-direction:column;align-items:flex-start;}
+.nav-tab .ttext small{font-size:.72rem;font-weight:400;color:rgba(255,255,255,.45);margin-top:1px;}
+.nav-tab.on .ttext small{color:var(--sl);}
+
+/* ── DEMO SECTIONS ── */
+.demo-section{display:none;}
+.demo-section.on{display:block;}
+
+/* ══════════════════════════════════════════════
+   DEMO A  — Review Analysis
+══════════════════════════════════════════════ */
+.a-hdr{background:var(--n);padding:16px 28px;}
+.a-hdr h1{font-size:1.1rem;font-weight:800;color:var(--w);}
+.a-hdr p{font-size:.8rem;color:var(--sl);margin-top:2px;}
+
+.a-wrap{max-width:860px;margin:22px auto;padding:0 18px 50px;}
+
+/* sub-tabs */
+.sub-tabs-label{display:block;width:100%;padding:11px 18px;font-size:.92rem;font-weight:800;background:var(--n);color:var(--w);border:none;border-radius:10px 10px 0 0;cursor:default;text-align:left;margin-bottom:0;}
+.sub-tabs{display:flex;background:var(--w);border-radius:0 0 12px 12px;overflow:hidden;border:1px solid #E2E8F0;margin-bottom:20px;}
+.sub-tab{flex:1;padding:13px 16px;font-weight:700;font-size:.88rem;cursor:pointer;color:#64748B;border:none;background:none;transition:all .2s;text-align:center;}
+.sub-tab.on{background:var(--n);color:var(--w);}
+
+.a-panel{display:none;}
+.a-panel.on{display:block;}
+
+/* intro */
+.intro-card{background:var(--w);border-radius:12px;padding:16px 20px;margin-bottom:16px;border:1px solid #E2E8F0;}
+.intro-card h2{font-size:.95rem;font-weight:800;color:var(--n);margin-bottom:5px;}
+.intro-card p{font-size:.85rem;color:#475569;line-height:1.6;}
+.tag{display:inline-block;padding:2px 9px;border-radius:8px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-left:7px;vertical-align:middle;}
+.tag.warm{background:#DBEAFE;color:#1E40AF;}.tag.pro{background:var(--gl);color:#065F46;}
+
+/* reviews */
+.rv-grid{display:flex;flex-direction:column;gap:9px;margin-bottom:16px;}
+.rv-card{background:var(--w);border-radius:9px;padding:13px 16px;border:1px solid #E2E8F0;display:flex;gap:11px;}
+.rv-card.pos{border-left:3px solid var(--g);}.rv-card.neg{border-left:3px solid var(--r);}
+.rv-card.neu{border-left:3px solid #94A3B8;}.rv-card.mix{border-left:3px solid var(--a);}
+.rv-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;background:#F1F5F9;}
+.rv-b{flex:1;}
+.rv-h{display:flex;gap:7px;align-items:center;margin-bottom:3px;flex-wrap:wrap;}
+.rv-name{font-size:.88rem;font-weight:700;color:var(--n);}
+.rv-stars{font-size:.82rem;color:#F59E0B;}
+.rv-date{font-size:.72rem;color:#94A3B8;margin-left:auto;}
+.rv-text{font-size:.85rem;color:#334155;line-height:1.6;}
+.rv-lbl{font-size:.68rem;font-weight:700;padding:2px 6px;border-radius:5px;margin-left:5px;}
+.rv-lbl.pos{background:#DCFCE7;color:#166534;}.rv-lbl.neg{background:#FEE2E2;color:#991B1B;}
+.rv-lbl.neu{background:#F1F5F9;color:#475569;}.rv-lbl.mix{background:var(--al);color:#92400E;}
+
+/* copy section */
+.copy-sec{background:var(--w);border-radius:12px;border:1px solid #E2E8F0;overflow:hidden;margin-bottom:14px;}
+.copy-hdr{background:var(--n);padding:11px 16px;display:flex;justify-content:space-between;align-items:center;}
+.copy-hdr h3{font-size:.88rem;font-weight:800;color:var(--w);}
+.copy-btn-g{background:var(--s);color:var(--nd);border:none;border-radius:6px;padding:4px 13px;font-family:'Sarabun',sans-serif;font-size:.8rem;font-weight:800;cursor:pointer;transition:all .2s;}
+.copy-btn-g:hover{background:var(--w);}.copy-btn-g.done{background:var(--g);color:var(--w);}
+.copy-body{padding:14px 16px;}
+.raw-text{font-family:'IBM Plex Mono',monospace;font-size:.76rem;color:#334155;line-height:1.75;white-space:pre-wrap;word-break:break-word;background:#F8FAFC;border-radius:8px;padding:12px 14px;max-height:240px;overflow-y:auto;border:1px solid #E2E8F0;}
+
+/* prompt sets */
+.pset{background:var(--w);border-radius:12px;border:1px solid #E2E8F0;overflow:hidden;margin-bottom:12px;}
+.pset-hdr{background:#0F172A;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;}
+.pset-hdr h3{font-size:.86rem;font-weight:800;color:#E2E8F0;}
+.pset-body{padding:14px 16px;}
+.plabel{font-size:.72rem;font-weight:700;color:var(--n);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.pbox{font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:#1e293b;line-height:1.75;white-space:pre-wrap;word-break:break-word;background:#F8FAFC;border-radius:8px;padding:12px 14px;border:1px solid #E2E8F0;position:relative;}
+.pbtn{position:absolute;top:7px;right:7px;background:#334155;color:#94A3B8;border:none;border-radius:5px;padding:3px 9px;font-size:.7rem;cursor:pointer;font-family:'Sarabun',sans-serif;}
+.pbtn:hover{background:#475569;color:var(--w);}.pbtn.done{background:var(--g);color:var(--w);}
+.exp-box{background:var(--gl);border:1px solid #86EFAC;border-radius:8px;padding:11px 14px;margin-top:9px;}
+.exp-box h4{font-size:.78rem;font-weight:800;color:var(--g);margin-bottom:4px;}
+.exp-box p{font-size:.78rem;color:#065F46;line-height:1.6;}
+.script-box{background:var(--al);border:1px solid #FCD34D;border-radius:10px;padding:13px 16px;margin-top:6px;}
+.script-box h4{font-size:.82rem;font-weight:800;color:#92400E;margin-bottom:5px;}
+.script-box p{font-size:.8rem;color:#78350F;line-height:1.65;}
+
+/* ══════════════════════════════════════════════
+   DEMO B  — Break-even Prompts
+══════════════════════════════════════════════ */
+.b-hdr{background:var(--nd);padding:0;}
+.b-hdr-inner{max-width:1100px;margin:0 auto;padding:18px 28px;display:flex;gap:14px;align-items:center;}
+.b-hdr h1{font-size:1.1rem;font-weight:800;color:var(--w);line-height:1.3;}
+.b-hdr p{font-size:.8rem;color:var(--sl);margin-top:2px;}
+
+/* howto */
+.howto{background:var(--n);padding:10px 28px;}
+.howto-inner{max-width:1100px;margin:0 auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+.hw-step{display:flex;gap:7px;align-items:center;font-size:.82rem;color:var(--sl);}
+.hw-num{background:var(--s);color:var(--nd);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;flex-shrink:0;}
+.hw-arr{color:rgba(255,255,255,.25);font-size:1rem;}
+
+/* canvas note */
+.canvas-note{max-width:1100px;margin:18px auto 0;padding:0 18px;}
+.cn{background:var(--al);border:1px solid #FCD34D;border-radius:12px;padding:12px 18px;display:flex;gap:11px;align-items:flex-start;}
+.cn h3{font-size:.85rem;font-weight:800;color:#92400E;margin-bottom:3px;}
+.cn p{font-size:.8rem;color:#78350F;line-height:1.55;}
+
+/* 3 level cards */
+.b-main{max-width:1100px;margin:18px auto;padding:0 18px 50px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.lcard{background:var(--w);border-radius:16px;border:1px solid #E2E8F0;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.lcard-bar{height:4px;}
+.lv1 .lcard-bar{background:linear-gradient(90deg,#3B82F6,#93C5FD);}
+.lv2 .lcard-bar{background:linear-gradient(90deg,var(--a),#FCD34D);}
+.lv3 .lcard-bar{background:linear-gradient(90deg,var(--g),#6EE7B7);}
+.lcard-top{padding:16px 18px 12px;}
+.lvbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:20px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+.lv1 .lvbadge{background:#DBEAFE;color:#1E40AF;}
+.lv2 .lvbadge{background:var(--al);color:var(--a);}
+.lv3 .lvbadge{background:var(--gl);color:#065F46;}
+.lcard h2{font-size:1rem;font-weight:800;color:var(--n);margin-bottom:3px;line-height:1.3;}
+.lcard .tl{font-size:.8rem;color:#64748B;margin-bottom:10px;line-height:1.5;}
+.gets{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.get{display:flex;gap:6px;align-items:flex-start;font-size:.8rem;color:#334155;line-height:1.5;}
+.get .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.lv1 .get .dot{background:#3B82F6;}.lv2 .get .dot{background:var(--a);}.lv3 .get .dot{background:var(--g);}
+.lcard-prompt{flex:1;display:flex;flex-direction:column;}
+.lcard-plabel{background:#F8FAFC;border-top:1px solid #F1F5F9;padding:9px 18px 5px;font-size:.7rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;align-items:center;}
+.lcopy-btn{background:var(--n);color:var(--w);border:none;border-radius:6px;padding:4px 13px;font-family:'Sarabun',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.lcopy-btn:hover{background:var(--nm);}.lcopy-btn.done{background:var(--g);}
+.lcard-scroll{flex:1;padding:12px 16px 16px;background:#F8FAFC;overflow-y:auto;min-height:0;max-height:300px;}
+.lcard-text{font-family:'IBM Plex Mono',monospace;font-size:.74rem;line-height:1.8;white-space:pre-wrap;word-break:break-word;}
+.lv1 .lcard-text{color:#1D4ED8;}.lv2 .lcard-text{color:#92400E;}.lv3 .lcard-text{color:#065F46;}
+.lcard-exp{background:var(--gl);border-top:1px solid #A7F3D0;padding:11px 16px;}
+.lcard-exp .elbl{font-size:.7rem;font-weight:800;color:var(--g);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.lcard-exp p{font-size:.78rem;color:#065F46;line-height:1.55;}
+
+/* tip bar */
+.tip-bar{max-width:1100px;margin:0 auto 28px;padding:0 18px;}
+.tip-inner{background:var(--n);border-radius:12px;padding:14px 20px;display:flex;gap:12px;align-items:flex-start;}
+.tip-inner h3{font-size:.88rem;font-weight:800;color:var(--s);margin-bottom:3px;}
+.tip-inner p{font-size:.8rem;color:var(--sl);line-height:1.6;}
+
+@media(max-width:800px){
+  .b-main{grid-template-columns:1fr;}
+  .nav-tab .ttext small{display:none;}
+  .howto-inner{gap:8px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ TOP NAV ══════════ -->
+<div class="topnav">
+  <div class="topnav-inner">
+    <div class="logo">
+      <span>🤖 Demo AI<small>29 พ.ค. 69</small></span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab on" onclick="switchDemo('A',this)">
+        <span class="ti">📱</span>
+        <span class="ttext">วิเคราะห์รีวิวลูกค้า<small>Demo ii — สรุป Facebook review</small></span>
+      </button>
+      <button class="nav-tab" onclick="switchDemo('B',this)">
+        <span class="ti">📊</span>
+        <span class="ttext">สร้างโปรแกรมจุดคุ้มทุน<small>Demo iii — 3 ระดับ Prompt</small></span>
+      </button>
+      <button class="nav-tab" onclick="switchDemo('C',this)">
+        <span class="ti">📋</span>
+        <span class="ttext">วิเคราะห์ข้อมูลจาก Sheets<small>Demo เพิ่มเติม — ตาราง 60 แถว</small></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     DEMO A — Review Analysis
+══════════════════════════════════════════════ -->
+<div class="demo-section on" id="demoA">
+
+  <div class="a-hdr">
+    <h1>📱 ฐานข้อมูล Review ตัวอย่าง — สำหรับ Demo AI วิเคราะห์รีวิวลูกค้า</h1>
+    <p>copy รีวิว → วางใน ChatGPT / Gemini → ถามตามลำดับ Prompt 1, 2, 3</p>
+  </div>
+
+  <div class="a-wrap">
+    <button class="sub-tabs-label">เลือกชุดข้อมูลที่จะ Demo:</button>
+    <div class="sub-tabs">
+      <button class="sub-tab on" onclick="switchSub(0)">🍜 ชุด 1: ร้านอาหารไทย<br><small style="font-weight:400;font-size:.73rem">warm-up · เข้าใจง่าย</small></button>
+      <button class="sub-tab" onclick="switchSub(1)">🧴 ชุด 2: สกินแคร์ชุมชน<br><small style="font-weight:400;font-size:.73rem">ซับซ้อน · โชว์ insight</small></button>
+      <button class="sub-tab" onclick="switchSub(2)">📋 Prompt พร้อมใช้<br><small style="font-weight:400;font-size:.73rem">copy แล้วไปวาง</small></button>
+    </div>
+
+    <!-- SUB A0: ร้านอาหาร -->
+    <div class="a-panel on" id="ap0">
+      <div class="intro-card"><h2>🍜 ร้าน "ครัวป้าแดง" — อาหารตามสั่งริมทาง <span class="tag warm">Warm-up</span></h2><p>รีวิว 15 ข้อ มีทั้งดีมาก ดี ปานกลาง และไม่ดี — เหมาะสำหรับ demo ตัวแรก ภาษาเข้าใจง่าย เห็นประเด็นชัด</p></div>
+      <div class="rv-grid">
+        <div class="rv-card pos"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">มาลี สุขใจ</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">3 วันที่แล้ว</span></div><div class="rv-text">อร่อยมากกก ผัดกระเพราหมูสับเข้มข้น ใส่พริกเยอะตามที่ขอได้เลย ราคาจานละ 60 บาทคุ้มมากๆ จะกลับมาอีกแน่นอนค่า ❤️</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👨</div><div class="rv-b"><div class="rv-h"><span class="rv-name">วิชัย รักดี</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">5 วันที่แล้ว</span></div><div class="rv-text">กินที่นี่มา 3 ปีแล้ว ไม่เคยผิดหวัง ต้มยำกุ้งหม้อเล็กสั่งได้ 2 คนกินพอดี น้ำซุปเข้มข้นหอมกลิ่นสมุนไพร ข้าวสวยหุงใหม่ทุกวัน</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">ปราณี จันทร์ดี</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">1 สัปดาห์ที่แล้ว</span></div><div class="rv-text">ชอบมากที่ป้าแดงจำหน้าลูกค้าประจำได้ สั่งอะไรโดยไม่ต้องบอกซ้ำ ยิ้มแย้มแจ่มใสทุกวัน บรรยากาศอบอุ่นเหมือนกินข้าวที่บ้าน</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">นภา รักอร่อย</span><span class="rv-stars">⭐⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">1 สัปดาห์ที่แล้ว</span></div><div class="rv-text">อาหารอร่อยนะคะ แต่รอนานมากตอนเที่ยง เกือบ 20 นาที แถวยาวมากเพราะมีแค่ป้าแดงคนเดียว ถ้ามีคนช่วยรับออเดอร์เพิ่มจะดีมาก</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👨</div><div class="rv-b"><div class="rv-h"><span class="rv-name">ประยุทธ์ หิวข้าว</span><span class="rv-stars">⭐⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">2 สัปดาห์ที่แล้ว</span></div><div class="rv-text">รสชาติดี ราคาโอเค แต่ที่นั่งน้อยมากครับ มีแค่ 4-5 โต๊ะ บางทีต้องยืนรอ อยากให้ขยายพื้นที่เพิ่มครับ</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">กัญญา มาแต่เช้า</span><span class="rv-stars">⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">3 สัปดาห์ที่แล้ว</span></div><div class="rv-text">วันธรรมดาอร่อยและเร็ว แต่วันศุกร์รอนานมาก อาหารยังอร่อยเหมือนเดิมนะคะ ขอแค่รอเร็วขึ้นหน่อยก็พอ</div></div></div>
+        <div class="rv-card neg"><div class="rv-av">😤</div><div class="rv-b"><div class="rv-h"><span class="rv-name">อนุชา ไม่พอใจ</span><span class="rv-stars">⭐⭐</span><span class="rv-lbl neg">ลบ</span><span class="rv-date">1 เดือนที่แล้ว</span></div><div class="rv-text">วันนี้ผัดกระเพราเค็มมากผิดปกติ บอกไปก็แค่บอกว่าสูตรเดิม ไม่ขอโทษ ไม่เปลี่ยนให้ เสียใจเพราะเคยชอบร้านนี้มากเลย</div></div></div>
+        <div class="rv-card neg"><div class="rv-av">😞</div><div class="rv-b"><div class="rv-h"><span class="rv-name">สุรีย์ คาดหวัง</span><span class="rv-stars">⭐⭐</span><span class="rv-lbl neg">ลบ</span><span class="rv-date">3 สัปดาห์ที่แล้ว</span></div><div class="rv-text">โต๊ะและเก้าอี้สกปรก แมลงวันเยอะมากวันที่ไป กินไม่ค่อยสบายใจ อยากให้ใส่ใจเรื่องความสะอาดมากกว่านี้ค่ะ</div></div></div>
+        <div class="rv-card neg"><div class="rv-av">😠</div><div class="rv-b"><div class="rv-h"><span class="rv-name">พิชัย โกรธจัด</span><span class="rv-stars">⭐</span><span class="rv-lbl neg">ลบ</span><span class="rv-date">2 เดือนที่แล้ว</span></div><div class="rv-text">สั่ง LINE ไปแล้วรอ 40 นาที โทรถามก็ไม่รับสาย ไปถึงร้านบอกหมดแล้ว ไม่มีการแจ้งล่วงหน้าเลย เสียเวลามากและเสียความรู้สึก</div></div></div>
+        <div class="rv-card neu"><div class="rv-av">😐</div><div class="rv-b"><div class="rv-h"><span class="rv-name">ลินดา ปานกลาง</span><span class="rv-stars">⭐⭐⭐</span><span class="rv-lbl neu">กลาง</span><span class="rv-date">1 เดือนที่แล้ว</span></div><div class="rv-text">ราคาปรับขึ้นมาจาก 50 เป็น 60 บาท โอเคนะคะ หวังว่าจะคงคุณภาพไว้เหมือนเดิม</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👧</div><div class="rv-b"><div class="rv-h"><span class="rv-name">มินตรา วัยรุ่น</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">4 วันที่แล้ว</span></div><div class="rv-text">ยำมะม่วงอร่อยมากค่า รสจัดจ้าน เปรี้ยวหวานเค็มครบ ราคา 45 บาทถูกมากสำหรับปริมาณเยอะขนาดนี้</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👴</div><div class="rv-b"><div class="rv-h"><span class="rv-name">สมศักดิ์ คนเก่า</span><span class="rv-stars">⭐⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">5 วันที่แล้ว</span></div><div class="rv-text">อยากให้มีเมนูผักมากขึ้นครับ ตอนนี้เน้นเนื้อสัตว์เยอะ คนชราหรือคนกินผักจะลำบากหน่อย</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👩‍💼</div><div class="rv-b"><div class="rv-h"><span class="rv-name">วราภรณ์ ออฟฟิศ</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">1 สัปดาห์ที่แล้ว</span></div><div class="rv-text">สั่งประจำทุกวันจันทร์-ศุกร์ ทั้งออฟฟิศชอบมาก ต้มจืดเต้าหู้หมูสับอร่อยและอบอุ่น แกงส้มก็เข้มข้นมาก ราคาไม่แพง</div></div></div>
+        <div class="rv-card neg"><div class="rv-av">😔</div><div class="rv-b"><div class="rv-h"><span class="rv-name">กิตติ ร้องเรียน</span><span class="rv-stars">⭐⭐</span><span class="rv-lbl neg">ลบ</span><span class="rv-date">2 สัปดาห์ที่แล้ว</span></div><div class="rv-text">ปกติอร่อยนะครับ แต่ 2 อาทิตย์ที่ผ่านมารสชาติเปลี่ยนไปมาก เกลือเยอะขึ้น น้ำมันเยอะขึ้น ไม่รู้เปลี่ยนคนทำหรือเปล่า</div></div></div>
+      </div>
+      <div class="copy-sec">
+        <div class="copy-hdr"><h3>📋 รีวิวทั้งหมด 15 ข้อ — Copy ไปวางใน ChatGPT/Gemini</h3><button class="copy-btn-g" id="c1" onclick="copyRaw('raw1','c1')">📋 Copy ทั้งหมด</button></div>
+        <div class="copy-body"><div class="raw-text" id="raw1">รีวิวจาก Facebook Page ร้านครัวป้าแดง — อาหารตามสั่ง
+
+1. มาลี สุขใจ ⭐⭐⭐⭐⭐ — "อร่อยมากกก ผัดกระเพราหมูสับเข้มข้น ใส่พริกเยอะตามที่ขอได้เลย ราคาจานละ 60 บาทคุ้มมากๆ จะกลับมาอีกแน่นอนค่า"
+2. วิชัย รักดี ⭐⭐⭐⭐⭐ — "กินที่นี่มา 3 ปีแล้ว ไม่เคยผิดหวัง ต้มยำกุ้งหม้อเล็กสั่งได้ 2 คนกินพอดี น้ำซุปเข้มข้นหอมกลิ่นสมุนไพร ข้าวสวยหุงใหม่ทุกวัน"
+3. ปราณี จันทร์ดี ⭐⭐⭐⭐⭐ — "ชอบมากที่ป้าแดงจำหน้าลูกค้าประจำได้ สั่งอะไรโดยไม่ต้องบอกซ้ำ ยิ้มแย้มแจ่มใสทุกวัน บรรยากาศอบอุ่นเหมือนกินข้าวที่บ้าน"
+4. สมชาย ใจดี ⭐⭐⭐⭐⭐ — "เมนูหลากหลายมาก กว่า 50 เมนู ชอบที่รับออเดอร์ LINE ได้ สะดวกมากสำหรับออฟฟิศที่สั่งมากินตอนพัก"
+5. นภา รักอร่อย ⭐⭐⭐⭐ — "อาหารอร่อยนะคะ แต่รอนานมากตอนเที่ยง เกือบ 20 นาที แถวยาวมากเพราะมีแค่ป้าแดงคนเดียว ถ้ามีคนช่วยรับออเดอร์เพิ่มจะดีมาก"
+6. ประยุทธ์ หิวข้าว ⭐⭐⭐⭐ — "รสชาติดี ราคาโอเค แต่ที่นั่งน้อยมากครับ มีแค่ 4-5 โต๊ะ บางทีต้องยืนรอ อยากให้ขยายพื้นที่เพิ่มครับ"
+7. กัญญา มาแต่เช้า ⭐⭐⭐ — "วันธรรมดาอร่อยและเร็ว แต่วันศุกร์รอนานมาก อาหารยังอร่อยเหมือนเดิมนะคะ ขอแค่รอเร็วขึ้นหน่อยก็พอ"
+8. อนุชา ไม่พอใจ ⭐⭐ — "วันนี้ผัดกระเพราเค็มมากผิดปกติ บอกไปก็แค่บอกว่าสูตรเดิม ไม่ขอโทษ ไม่เปลี่ยนให้ เสียใจเพราะเคยชอบร้านนี้มากเลย"
+9. สุรีย์ คาดหวัง ⭐⭐ — "โต๊ะและเก้าอี้สกปรก แมลงวันเยอะมากวันที่ไป กินไม่ค่อยสบายใจ อยากให้ใส่ใจเรื่องความสะอาดมากกว่านี้ค่ะ"
+10. พิชัย โกรธจัด ⭐ — "สั่ง LINE ไปแล้วรอ 40 นาที โทรถามก็ไม่รับสาย ไปถึงร้านบอกหมดแล้ว ไม่มีการแจ้งล่วงหน้าเลย เสียเวลามากและเสียความรู้สึก"
+11. ลินดา ปานกลาง ⭐⭐⭐ — "ราคาปรับขึ้นมาจาก 50 เป็น 60 บาท โอเคนะคะ หวังว่าจะยังคงคุณภาพไว้เหมือนเดิม ตอนนี้ยังดีอยู่"
+12. มินตรา วัยรุ่น ⭐⭐⭐⭐⭐ — "ยำมะม่วงอร่อยมากค่า รสจัดจ้าน เปรี้ยวหวานเค็มครบ ราคา 45 บาทถูกมากสำหรับปริมาณเยอะขนาดนี้"
+13. สมศักดิ์ คนเก่า ⭐⭐⭐⭐ — "อยากให้มีเมนูผักมากขึ้นครับ ตอนนี้เน้นเนื้อสัตว์เยอะ คนชราหรือคนกินผักจะลำบากหน่อย อาหารอร่อยนะ"
+14. วราภรณ์ ออฟฟิศ ⭐⭐⭐⭐⭐ — "สั่งประจำทุกวันจันทร์-ศุกร์ ทั้งออฟฟิศชอบมาก ต้มจืดเต้าหู้หมูสับอร่อยและอบอุ่น ราคาไม่แพง"
+15. กิตติ ร้องเรียน ⭐⭐ — "ปกติอร่อยนะครับ แต่ 2 อาทิตย์ที่ผ่านมารสชาติเปลี่ยนไปมาก เกลือเยอะขึ้น น้ำมันเยอะขึ้น ไม่รู้เปลี่ยนคนทำหรือเปล่า"</div></div>
+      </div>
+    </div>
+
+    <!-- SUB A1: สกินแคร์ -->
+    <div class="a-panel" id="ap1">
+      <div class="intro-card"><h2>🧴 ร้าน "บิวตี้ชุมชน" — ครีมสมุนไพรโฮมเมด <span class="tag pro">ซับซ้อนขึ้น</span></h2><p>รีวิว 15 ข้อ มีทั้งเรื่องผลิตภัณฑ์ บรรจุภัณฑ์ การจัดส่ง และ after-sale service — โชว์ว่า AI แยก insight ได้หลายมิติ</p></div>
+      <div class="rv-grid">
+        <div class="rv-card pos"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">อรุณี ผิวดี</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">2 วันที่แล้ว</span></div><div class="rv-text">ใช้ครีมกันแดดสูตรขมิ้นมา 2 เดือนแล้ว ผิวไม่มัน ไม่อุดตัน ขมิ้นจริงๆ ไม่ใช่แค่สี กลิ่นหอมธรรมชาติมาก บอกเพื่อนทุกคนแล้ว</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👩‍🦳</div><div class="rv-b"><div class="rv-h"><span class="rv-name">นงนุช อายุ 52</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">4 วันที่แล้ว</span></div><div class="rv-text">ผิวแพ้ง่ายมากค่ะ ลองมาหลายยี่ห้อแล้วแพ้ทั้งนั้น แต่ครีมบิวตี้ชุมชนไม่แพ้เลย ผิวชุ่มชื้นขึ้นมาก ส่วนผสมธรรมชาติจริงๆ</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">สิริพร บ่นนิดหน่อย</span><span class="rv-stars">⭐⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">5 วันที่แล้ว</span></div><div class="rv-text">ของดีมากค่ะ แต่กล่องส่งมาบี้เลยค่ะ อยากให้แพ็คเพิ่มฟองกันกระแทก ครีมจะซื้ออีกแน่นอน</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">มณีรัตน์ รอนาน</span><span class="rv-stars">⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">2 สัปดาห์ที่แล้ว</span></div><div class="rv-text">ครีมดีค่ะ แต่รอสินค้า 10 วัน ทั้งๆ ที่เขียนว่าส่ง 3-5 วัน ถามแล้วบอกของหมดแต่ไม่แจ้งล่วงหน้า อยากให้อัปเดตสต็อกให้ชัดเจน</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👧</div><div class="rv-b"><div class="rv-h"><span class="rv-name">พลอย นักช้อป</span><span class="rv-stars">⭐⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">1 สัปดาห์ที่แล้ว</span></div><div class="rv-text">ผิวดีขึ้นจริงๆ ค่ะ แต่ label บนกระปุกพิมพ์เล็กมาก อ่านวิธีใช้ไม่ออกเลย ถ้าปรับ packaging ให้ดีขึ้นจะ perfect เลยค่ะ</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">วันเพ็ญ สงสัย</span><span class="rv-stars">⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">3 สัปดาห์ที่แล้ว</span></div><div class="rv-text">สินค้าดีนะคะ แต่ไม่มีวันหมดอายุบนกระปุก ถามทาง inbox รอนาน 2 วันค่อยตอบ อยากให้ระบุวันหมดอายุและตอบ inbox เร็วกว่านี้</div></div></div>
+        <div class="rv-card neg"><div class="rv-av">😤</div><div class="rv-b"><div class="rv-h"><span class="rv-name">กาญจนา แพ้ครีม</span><span class="rv-stars">⭐⭐</span><span class="rv-lbl neg">ลบ</span><span class="rv-date">2 สัปดาห์ที่แล้ว</span></div><div class="rv-text">ใช้แล้วผิวแดงขึ้นค่ะ แจ้งทางร้านแล้วบอกให้หยุดใช้แล้วผิวจะดีขึ้นเอง ไม่มีการเยียวยาหรือคืนเงินเลย ร้านไม่รับผิดชอบ</div></div></div>
+        <div class="rv-card neg"><div class="rv-av">😠</div><div class="rv-b"><div class="rv-h"><span class="rv-name">ปิยวรรณ ร้องเรียน</span><span class="rv-stars">⭐</span><span class="rv-lbl neg">ลบ</span><span class="rv-date">3 สัปดาห์ที่แล้ว</span></div><div class="rv-text">โอนเงินแล้วรอ 2 อาทิตย์ไม่ได้ของ ทักไปหลายรอบไม่ตอบ จนต้องขู่จะแจ้งความถึงตอบ ไม่ควรเกิดขึ้นเลยกับธุรกิจที่อยากให้คนเชื่อใจ</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👩‍⚕️</div><div class="rv-b"><div class="rv-h"><span class="rv-name">หมอน้ำผึ้ง แนะนำ</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">3 วันที่แล้ว</span></div><div class="rv-text">เป็นหมอผิวหนัง แนะนำให้คนไข้ที่ผิวแพ้มาก ส่วนผสมเรียบง่าย ไม่มีน้ำหอม ดีกว่าสินค้าในห้างหลายตัวมากเลยค่ะ</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">อลิสา ลูกค้าประจำ</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">6 วันที่แล้ว</span></div><div class="rv-text">สั่งมา 8 รอบแล้วค่ะ ครีมรอบนี้มีแถมถุงผ้า น่ารักมาก ถ้าทำ loyalty program หรือส่วนลดสมาชิกจะดีมากเลย</div></div></div>
+        <div class="rv-card mix"><div class="rv-av">🧑</div><div class="rv-b"><div class="rv-h"><span class="rv-name">กวิน ซื้อให้แฟน</span><span class="rv-stars">⭐⭐⭐⭐</span><span class="rv-lbl mix">ผสม</span><span class="rv-date">1 สัปดาห์ที่แล้ว</span></div><div class="rv-text">แฟนชอบมากเลย แต่ packaging ดูไม่หรูพอสำหรับเป็นของขวัญ ถ้ามี gift set option จะดีมาก ยินดีจ่ายเพิ่มเพื่อ packaging สวยกว่านี้ครับ</div></div></div>
+        <div class="rv-card neg"><div class="rv-av">😞</div><div class="rv-b"><div class="rv-h"><span class="rv-name">ชนกนันท์ ผิดหวัง</span><span class="rv-stars">⭐⭐</span><span class="rv-lbl neg">ลบ</span><span class="rv-date">1 เดือนที่แล้ว</span></div><div class="rv-text">กระปุก 50ml ราคา 280 บาท แพงเกินไปค่ะ ใช้ได้แค่เดือนครึ่ง ถ้าลดราคาหรือทำไซส์ใหญ่กว่านี้ได้จะซื้อซ้ำ ของดีนะแต่ราคาขวดโตหน่อย</div></div></div>
+        <div class="rv-card neu"><div class="rv-av">👩</div><div class="rv-b"><div class="rv-h"><span class="rv-name">สายฝน เปรียบเทียบ</span><span class="rv-stars">⭐⭐⭐</span><span class="rv-lbl neu">กลาง</span><span class="rv-date">2 เดือนที่แล้ว</span></div><div class="rv-text">ของดีนะคะ แต่เว็บไซต์ร้านโหลดช้ามาก และรูปสินค้าไม่ชัด ตอนแรกไม่อยากสั่งเลย พอได้รับของถึงประทับใจ ควรปรับ online presence ให้ดีขึ้น</div></div></div>
+        <div class="rv-card pos"><div class="rv-av">👵</div><div class="rv-b"><div class="rv-h"><span class="rv-name">ยายทองใส ปากบอก</span><span class="rv-stars">⭐⭐⭐⭐⭐</span><span class="rv-lbl pos">บวก</span><span class="rv-date">2 สัปดาห์ที่แล้ว</span></div><div class="rv-text">ลูกสาวสั่งให้ค่ะ ใช้แล้วผิวไม่แห้งเหมือนเดิม อายุ 68 แล้วผิวยังดูดีขึ้นเลย บอกเพื่อนบ้านไปหลายคน ทุกคนสั่งแล้วก็ชอบหมด</div></div></div>
+      </div>
+      <div class="copy-sec">
+        <div class="copy-hdr"><h3>📋 รีวิวทั้งหมด 15 ข้อ — Copy ไปวางใน ChatGPT/Gemini</h3><button class="copy-btn-g" id="c2" onclick="copyRaw('raw2','c2')">📋 Copy ทั้งหมด</button></div>
+        <div class="copy-body"><div class="raw-text" id="raw2">รีวิวจาก Facebook Page ร้านบิวตี้ชุมชน — ครีมสมุนไพรโฮมเมด
+
+1. อรุณี ผิวดี ⭐⭐⭐⭐⭐ — "ใช้ครีมกันแดดสูตรขมิ้นมา 2 เดือนแล้ว ผิวไม่มัน ไม่อุดตัน ขมิ้นจริงๆ ไม่ใช่แค่สี กลิ่นหอมธรรมชาติ บอกเพื่อนทุกคนแล้ว"
+2. นงนุช อายุ 52 ⭐⭐⭐⭐⭐ — "ผิวแพ้ง่ายมากค่ะ ลองมาหลายยี่ห้อแล้วแพ้ทั้งนั้น แต่ครีมบิวตี้ชุมชนไม่แพ้เลย ผิวชุ่มชื้นขึ้นมาก ส่วนผสมธรรมชาติจริงๆ"
+3. ธนกร ชายผิวดี ⭐⭐⭐⭐⭐ — "ผู้ชายใช้ได้นะครับ ผิวหน้าไม่มันตอนบ่าย ราคา 280 บาทคุ้มมากถ้าเทียบกับที่ซื้อห้าง"
+4. สิริพร บ่นนิดหน่อย ⭐⭐⭐⭐ — "ของดีมากค่ะ แต่กล่องส่งมาบี้เลยค่ะ อยากให้แพ็คเพิ่มฟองกันกระแทก ครีมจะซื้ออีกแน่นอน"
+5. มณีรัตน์ รอนาน ⭐⭐⭐ — "ครีมดีค่ะ แต่รอสินค้า 10 วัน ทั้งๆ ที่เขียนว่าส่ง 3-5 วัน ถามแล้วบอกของหมดแต่ไม่แจ้งล่วงหน้า"
+6. พลอย นักช้อป ⭐⭐⭐⭐ — "ผิวดีขึ้นจริงๆ ค่ะ แต่ label บนกระปุกพิมพ์เล็กมาก อ่านวิธีใช้ไม่ออกเลย ถ้าปรับ packaging ให้ดีขึ้นจะ perfect เลยค่ะ"
+7. วันเพ็ญ สงสัย ⭐⭐⭐ — "สินค้าดีนะคะ แต่ไม่มีวันหมดอายุบนกระปุก ถามทาง inbox รอนาน 2 วันค่อยตอบ อยากให้ระบุวันหมดอายุและตอบ inbox เร็วกว่านี้"
+8. กาญจนา แพ้ครีม ⭐⭐ — "ใช้แล้วผิวแดงขึ้นค่ะ แจ้งทางร้านแล้วบอกให้หยุดใช้แล้วผิวจะดีขึ้นเอง ไม่มีการเยียวยาหรือคืนเงินเลย ร้านไม่รับผิดชอบ"
+9. ชนกนันท์ ผิดหวัง ⭐⭐ — "กระปุก 50ml ราคา 280 บาท แพงเกินไปค่ะ ใช้ได้แค่เดือนครึ่ง ถ้าลดราคาหรือทำไซส์ใหญ่กว่านี้ได้จะซื้อซ้ำ"
+10. ปิยวรรณ ร้องเรียน ⭐ — "โอนเงินแล้วรอ 2 อาทิตย์ไม่ได้ของ ทักไปหลายรอบไม่ตอบ จนต้องขู่จะแจ้งความถึงตอบ ไม่ควรเกิดขึ้นเลย"
+11. หมอน้ำผึ้ง แนะนำ ⭐⭐⭐⭐⭐ — "เป็นหมอผิวหนัง แนะนำให้คนไข้ที่ผิวแพ้มาก ส่วนผสมเรียบง่าย ไม่มีน้ำหอม ดีกว่าสินค้าในห้างหลายตัวมาก"
+12. อลิสา ลูกค้าประจำ ⭐⭐⭐⭐⭐ — "สั่งมา 8 รอบแล้วค่ะ ครีมรอบนี้มีแถมถุงผ้า น่ารักมาก ถ้าทำ loyalty program หรือส่วนลดสมาชิกจะดีมากเลย"
+13. กวิน ซื้อให้แฟน ⭐⭐⭐⭐ — "แฟนชอบมากเลย แต่ packaging ดูไม่หรูพอสำหรับเป็นของขวัญ ถ้ามี gift set option จะดีมาก"
+14. สายฝน เปรียบเทียบ ⭐⭐⭐ — "ของดีนะคะ แต่เว็บไซต์ร้านโหลดช้ามาก และรูปสินค้าไม่ชัด ตอนแรกไม่อยากสั่งเลย พอได้รับของถึงประทับใจ ควรปรับ online presence"
+15. ยายทองใส ปากบอก ⭐⭐⭐⭐⭐ — "อายุ 68 แล้วผิวยังดูดีขึ้นเลย บอกเพื่อนบ้านไปหลายคน ทุกคนสั่งแล้วก็ชอบหมด ของดีต้องบอกต่อ"</div></div>
+      </div>
+    </div>
+
+    <!-- SUB A2: Prompts -->
+    <div class="a-panel" id="ap2">
+      <div class="intro-card"><h2>📋 Prompt พร้อมใช้ — เรียงตาม Level</h2><p>ถามทีละอันในช่อง chat เดิว ต่อกันเลย — ไม่ต้องวางรีวิวซ้ำใน Prompt 2 และ 3</p></div>
+      <div class="pset"><div class="pset-hdr"><h3>🟢 ขั้นที่ 1 — วางรีวิว + สรุปภาพรวม (เริ่มต้น)</h3><button class="copy-btn-g" id="cp1" onclick="copyPmt('pm1','cp1')">📋 Copy</button></div>
+      <div class="pset-body"><div class="plabel">วาง Prompt นี้ + รีวิวทั้งหมดใน ChatGPT / Gemini</div>
+      <div class="pbox" id="pm1">ช่วยวิเคราะห์รีวิวลูกค้าเหล่านี้ให้หน่อยนะครับ:
+
+[วางรีวิว 15 ข้อตรงนี้]
+
+ขอให้สรุป:
+1. ลูกค้าชื่นชมอะไรมากที่สุด?
+2. มีข้อร้องเรียนหรือปัญหาอะไรบ้าง?
+3. ควรปรับปรุงอะไรเป็นอันดับแรก?
+4. สรุปเป็นตาราง rating 1-5 ดาว แต่ละด้าน (สินค้า บริการ ราคา การจัดส่ง)<button class="pbtn" id="pb1" onclick="copyPmt('pm1','pb1')">copy</button></div>
+      <div class="exp-box"><h4>✅ ผลที่คาดว่าจะได้</h4><p>สรุปจุดแข็งและปัญหาหลัก พร้อมตารางคะแนนแต่ละมิติ — ใช้เวลาไม่ถึงนาที</p></div></div></div>
+
+      <div class="pset"><div class="pset-hdr"><h3>🟡 ขั้นที่ 2 — Follow-up ขอ Action Plan (พิมพ์ต่อในช่องเดิม)</h3><button class="copy-btn-g" id="cp2" onclick="copyPmt('pm2','cp2')">📋 Copy</button></div>
+      <div class="pset-body"><div class="plabel">ไม่ต้องวางรีวิวซ้ำ — พิมพ์ต่อในช่อง chat เดิมได้เลย</div>
+      <div class="pbox" id="pm2">จากการวิเคราะห์ข้างต้น ช่วยทำ Action Plan ให้หน่อยครับ
+
+ขอเป็น 3 อย่างที่ทำได้ทันที (ภายใน 1 สัปดาห์)
+และ 3 อย่างที่ต้องวางแผนระยะยาว (1-3 เดือน)
+
+แต่ละข้อระบุด้วยว่า ใช้เงินเท่าไหร่ และ AI ช่วยได้ไหม<button class="pbtn" id="pb2" onclick="copyPmt('pm2','pb2')">copy</button></div>
+      <div class="exp-box"><h4>✅ ผลที่คาดว่าจะได้</h4><p>ได้แผนแบ่งระยะชัดเจน พร้อมประมาณการค่าใช้จ่าย และ AI ชี้ว่างานไหนทำเองได้ฟรีผ่าน AI</p></div></div></div>
+
+      <div class="pset"><div class="pset-hdr"><h3>🔵 ขั้นที่ 3 — ขอ Template ตอบ Comment (พิมพ์ต่อในช่องเดิม)</h3><button class="copy-btn-g" id="cp3" onclick="copyPmt('pm3','cp3')">📋 Copy</button></div>
+      <div class="pset-body"><div class="plabel">โชว์ว่า AI ไม่ได้แค่วิเคราะห์ แต่ทำงานต่อได้เลย</div>
+      <div class="pbox" id="pm3">ช่วยเขียน template การตอบ comment สำหรับ 3 กรณีนี้ครับ:
+
+1. ลูกค้าชมสินค้า → ตอบขอบคุณแบบอบอุ่น ไม่ทางการเกินไป
+2. ลูกค้าร้องเรียนเรื่องการจัดส่งช้า → ตอบขอโทษและแจ้งขั้นตอนแก้ไข
+3. ลูกค้าถามเรื่องราคาแพงเกินไป → ตอบอธิบายคุณค่าโดยไม่ทำให้รู้สึกแย่
+
+โทนภาษาควรเป็นธุรกิจ SME ไทย อบอุ่น จริงใจ ไม่ formal เกินไป<button class="pbtn" id="pb3" onclick="copyPmt('pm3','pb3')">copy</button></div>
+      <div class="exp-box"><h4>✅ ผลที่คาดว่าจะได้</h4><p>ได้ template 3 แบบนำไปใช้ตอบได้เลย — key message: "AI ไม่ได้แค่บอกว่าต้องทำอะไร แต่ทำให้ด้วยเลยครับ"</p></div></div></div>
+
+
+    </div>
+
+  </div><!-- end a-wrap -->
+</div><!-- end demoA -->
+
+<!-- ══════════════════════════════════════════════
+     DEMO B — Break-even Prompts
+══════════════════════════════════════════════ -->
+<div class="demo-section" id="demoB">
+  <div class="b-hdr">
+    <div class="b-hdr-inner">
+      <div style="font-size:2.2rem;flex-shrink:0">📊</div>
+      <div>
+        <h1>สร้างโปรแกรมจุดคุ้มทุนด้วย AI — 3 ระดับ</h1>
+        <p>คัดลอก Prompt → วางใน ChatGPT / Claude → กด Enter → ได้โปรแกรมพร้อมใช้ทันที</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="howto">
+    <div class="howto-inner">
+      <div class="hw-step"><div class="hw-num">1</div>กด Copy Prompt</div><div class="hw-arr">→</div>
+      <div class="hw-step"><div class="hw-num">2</div>เปิด ChatGPT หรือ Claude</div><div class="hw-arr">→</div>
+      <div class="hw-step"><div class="hw-num">3</div>วาง (Ctrl+V) แล้วกด Enter</div><div class="hw-arr">→</div>
+      <div class="hw-step"><div class="hw-num">4</div>Copy โค้ดที่ได้ → บันทึกเป็น .html</div><div class="hw-arr">→</div>
+      <div class="hw-step"><div class="hw-num">5</div>เปิดไฟล์ใน Chrome → ใช้งานได้เลย</div>
+    </div>
+  </div>
+
+  <div class="canvas-note">
+    <div class="cn">
+      <div style="font-size:1.3rem;flex-shrink:0">💡</div>
+      <div><h3>ใช้ Canvas ใน ChatGPT เพื่อดูและแก้โค้ดได้สะดวกขึ้น</h3>
+      <p>กด <strong>Canvas</strong> (ไอคอนดินสอ มุมขวาของช่องพิมพ์) ก่อน paste prompt → AI สร้างโค้ดในหน้าต่างแยก Preview ได้ทันที ไม่ต้องบันทึกไฟล์ — เหมาะสำหรับ demo ในห้องมาก</p></div>
+    </div>
+  </div>
+
+  <div class="b-main">
+    <!-- LV1 -->
+    <div class="lcard lv1">
+      <div class="lcard-bar"></div>
+      <div class="lcard-top">
+        <div class="lvbadge">⚡ ระดับ 1 — เริ่มต้น</div>
+        <h2>Prompt สั้น ผลออกเร็ว</h2>
+        <div class="tl">ไม่ระบุรายละเอียดมาก — ใช้ดู wow moment แรก</div>
+        <div class="gets">
+          <div class="get"><span class="dot"></span>กรอกราคาขาย ต้นทุนคงที่ ต้นทุนผันแปรได้</div>
+          <div class="get"><span class="dot"></span>คำนวณจุดคุ้มทุนอัตโนมัติ</div>
+          <div class="get"><span class="dot"></span>โค้ดออกมาใน 20–30 วินาที</div>
+        </div>
+      </div>
+      <div class="lcard-prompt">
+        <div class="lcard-plabel"><span>📋 Prompt</span><button class="lcopy-btn" id="lb1" onclick="doCopy('lt1','lb1')">⧉ Copy</button></div>
+        <div class="lcard-scroll"><div class="lcard-text" id="lt1">ช่วยสร้างเว็บคำนวณจุดคุ้มทุนสำหรับร้านกาแฟ โดยกรอกราคาขาย ต้นทุนคงที่ และต้นทุนผันแปรได้ แล้วคำนวณจำนวนที่ต้องขายเพื่อให้คุ้มทุน</div></div>
+        <div class="lcard-exp"><div class="elbl">✅ ผลที่คาดว่าได้</div><p>หน้าเว็บง่ายๆ กรอกตัวเลขได้ คำนวณได้ — โชว์ว่า prompt สั้นๆ ก็ได้ผลแล้ว</p></div>
+      </div>
+    </div>
+    <!-- LV2 -->
+    <div class="lcard lv2">
+      <div class="lcard-bar"></div>
+      <div class="lcard-top">
+        <div class="lvbadge">🔥 ระดับ 2 — กลาง</div>
+        <h2>ระบุ spec ชัดขึ้น ผลดีขึ้น</h2>
+        <div class="tl">บอก AI ว่าต้องการอะไรเพิ่ม — เห็นความต่างของ Prompt</div>
+        <div class="gets">
+          <div class="get"><span class="dot"></span>เพิ่มรายการต้นทุนได้หลายรายการ</div>
+          <div class="get"><span class="dot"></span>แสดงยอดขาย ณ จุดคุ้มทุนด้วย</div>
+          <div class="get"><span class="dot"></span>ใช้ภาษาไทยทั้งหมด สวยงาม</div>
+        </div>
+      </div>
+      <div class="lcard-prompt">
+        <div class="lcard-plabel"><span>📋 Prompt</span><button class="lcopy-btn" id="lb2" onclick="doCopy('lt2','lb2')">⧉ Copy</button></div>
+        <div class="lcard-scroll"><div class="lcard-text" id="lt2">ช่วยสร้างเว็บ HTML ไฟล์เดียวสำหรับคำนวณจุดคุ้มทุนของร้านค้าเล็กๆ ใช้ภาษาไทย กรอกราคาขาย ต้นทุนคงที่ และต้นทุนผันแปรได้หลายรายการ แล้วคำนวณจำนวนหน่วยที่ต้องขายและยอดขาย ณ จุดคุ้มทุน ออกแบบให้สวย อ่านง่าย และเปิดใช้ใน Browser ได้ทันที</div></div>
+        <div class="lcard-exp"><div class="elbl">✅ ผลที่คาดว่าได้</div><p>หน้าเว็บสวยขึ้น เพิ่มรายการได้ มีทั้งหน่วยและยอดขาย — "บอกละเอียดขึ้น ได้ผลดีขึ้นจริง"</p></div>
+      </div>
+    </div>
+    <!-- LV3 -->
+    <div class="lcard lv3">
+      <div class="lcard-bar"></div>
+      <div class="lcard-top">
+        <div class="lvbadge">🏆 ระดับ 3 — ครบฟีเจอร์</div>
+        <h2>Prompt มือโปร ได้โปรแกรมจริง</h2>
+        <div class="tl">ระบุทุก requirement — เหมือนจ้างโปรแกรมเมอร์ทำ</div>
+        <div class="gets">
+          <div class="get"><span class="dot"></span>Dropdown เลือกประเภทต้นทุน</div>
+          <div class="get"><span class="dot"></span>แสดง Contribution Margin</div>
+          <div class="get"><span class="dot"></span>ตัวเลขใหญ่ + คำอธิบายสูตร</div>
+          <div class="get"><span class="dot"></span>แจ้งเตือนถ้าราคาขาย ≤ VC</div>
+          <div class="get"><span class="dot"></span>ออฟไลน์ได้ ไม่ต้องติดตั้ง</div>
+        </div>
+      </div>
+      <div class="lcard-prompt">
+        <div class="lcard-plabel"><span>📋 Prompt</span><button class="lcopy-btn" id="lb3" onclick="doCopy('lt3','lb3')">⧉ Copy</button></div>
+        <div class="lcard-scroll"><div class="lcard-text" id="lt3">ช่วยสร้างโปรแกรมคำนวณจุดคุ้มทุนสำหรับผู้ประกอบการรายย่อย เป็นไฟล์ HTML ไฟล์เดียว เปิดใช้งานใน Browser ได้ทันที โดยไม่ต้องต่ออินเทอร์เน็ต
+
+คุณสมบัติที่ต้องการ:
+1. ให้ผู้ใช้กรอกราคาขายต่อหน่วย
+2. ให้เพิ่มรายการต้นทุนคงที่ได้หลายรายการ เช่น ค่าเช่า ค่าแรงประจำ ค่าอุปกรณ์ ค่าไฟขั้นต่ำ
+3. ให้เพิ่มรายการต้นทุนผันแปรต่อหน่วยได้หลายรายการ เช่น วัตถุดิบ บรรจุภัณฑ์ ค่าขนส่ง ค่าคอมมิชชัน
+4. มีช่องเลือกประเภทต้นทุนจาก dropdown
+5. มีช่องใส่รายละเอียด จำนวน หน่วย และต้นทุนต่อหน่วย
+6. คำนวณต้นทุนคงที่รวม
+7. คำนวณต้นทุนผันแปรต่อหน่วยรวม
+8. คำนวณ Contribution Margin ต่อหน่วย
+9. คำนวณจำนวนหน่วยที่ต้องขาย ณ จุดคุ้มทุน
+10. คำนวณยอดขาย ณ จุดคุ้มทุน
+11. แสดงผลลัพธ์เป็นตัวเลขขนาดใหญ่ อ่านง่าย
+12. มีคำอธิบายสูตรแบบภาษาง่ายๆ ใต้ผลลัพธ์
+13. ออกแบบหน้าตาให้สวยงาม เรียบง่าย ใช้ภาษาไทยทั้งหมด
+14. ใช้ HTML, CSS และ JavaScript ในไฟล์เดียว
+15. ไม่ใช้ library ภายนอก
+
+สูตรที่ใช้:
+จุดคุ้มทุนเป็นหน่วย = ต้นทุนคงที่รวม ÷ (ราคาขายต่อหน่วย - ต้นทุนผันแปรต่อหน่วย)
+ยอดขาย ณ จุดคุ้มทุน = จุดคุ้มทุนเป็นหน่วย × ราคาขายต่อหน่วย
+กรณีราคาขายต่อหน่วยน้อยกว่าหรือเท่ากับต้นทุนผันแปรต่อหน่วย ให้แจ้งเตือนว่า "ราคาขายยังไม่ครอบคลุมต้นทุนผันแปร จึงยังไม่สามารถคำนวณจุดคุ้มทุนได้"
+
+ขอให้เขียนโค้ดทั้งหมดให้สมบูรณ์ พร้อมใช้งานทันที</div></div>
+        <div class="lcard-exp"><div class="elbl">✅ ผลที่คาดว่าได้</div><p>โปรแกรมครบฟีเจอร์ เหมือนจ้างโปรแกรมเมอร์ — "prompt ละเอียด = ได้ของที่ใช้ได้จริง ราคา 0 บาท"</p></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end demoB -->
+
+<!-- ══════════════════════════════════════════════
+     DEMO C — Spreadsheet Data Analysis
+══════════════════════════════════════════════ -->
+<div class="demo-section" id="demoC">
+  <div class="a-hdr">
+    <h1>📋 วิเคราะห์ข้อมูลจาก Excel / Google Sheets — ตาราง 60 แถว 17 คอลัมน์</h1>
+    <p>ข้อมูลจริงจาก spreadsheet → copy ทั้งตาราง → วาง ChatGPT → ได้ analysis ลึกกว่ารีวิวข้อความธรรมดามาก</p>
+  </div>
+
+  <div class="a-wrap" style="max-width:960px">
+
+    <!-- ── WHAT'S DIFFERENT ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div style="background:white;border-radius:12px;padding:16px 18px;border:1px solid #E2E8F0">
+        <div style="font-size:.72rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">📝 รีวิวข้อความธรรมดา</div>
+        <div style="font-size:.85rem;color:#334155;line-height:1.7">AI อ่านและสรุปเนื้อหา<br>บอกได้ว่า "ชอบ/ไม่ชอบอะไร"<br>ไม่มี pattern เชิงตัวเลข</div>
+      </div>
+      <div style="background:#EEF6FF;border-radius:12px;padding:16px 18px;border:1px solid #BFDBFE">
+        <div style="font-size:.72rem;font-weight:800;color:#1E40AF;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">📊 ข้อมูลตาราง (ไฟล์นี้)</div>
+        <div style="font-size:.85rem;color:#1D4ED8;line-height:1.7;font-weight:600">AI วิเคราะห์เชิงสถิติได้<br>rating เฉลี่ยต่อ platform / เมนู / ช่องทาง<br>หา pattern ที่ตาคนอ่านไม่ออก</div>
+      </div>
+    </div>
+
+    <!-- ── DATASET INFO ── -->
+    <div class="intro-card" style="margin-bottom:14px">
+      <h2>📁 ข้อมูลในไฟล์: <strong>social_media_review_demo_dataset.xlsx / .csv</strong></h2>
+      <p style="margin-top:6px">60 รีวิว จาก 4 platform (Facebook, Google Review, LINE OA, TikTok) — 17 คอลัมน์ต่อแถว</p>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <span style="background:#EEF6FF;color:#1E40AF;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:700">Facebook 34 รีวิว</span>
+        <span style="background:#F0FDF4;color:#065F46;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:700">Google Review 15 รีวิว</span>
+        <span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:700">LINE OA 9 รีวิว</span>
+        <span style="background:#F3E8FF;color:#6B21A8;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:700">TikTok 2 รีวิว</span>
+        <span style="background:#FEE2E2;color:#991B1B;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:700">⚠ Priority สูง 12 รีวิว</span>
+        <span style="background:#D1FAE5;color:#065F46;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:700">⭐ 5 ดาว 24 รีวิว</span>
+      </div>
+    </div>
+
+    <!-- ── COLUMNS ── -->
+    <div class="copy-sec" style="margin-bottom:16px">
+      <div class="copy-hdr"><h3>📐 คอลัมน์ทั้งหมด 17 คอลัมน์</h3></div>
+      <div class="copy-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">review_id</span><br><span style="color:#64748B;font-size:.74rem">รหัส R001–R060</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">review_date</span><br><span style="color:#64748B;font-size:.74rem">วันที่รีวิว</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">platform</span><br><span style="color:#64748B;font-size:.74rem">Facebook / Google / LINE / TikTok</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">rating</span><br><span style="color:#64748B;font-size:.74rem">1–5 ดาว</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">sentiment</span><br><span style="color:#64748B;font-size:.74rem">บวก / ลบ / กลาง</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">menu_item</span><br><span style="color:#64748B;font-size:.74rem">เมนูที่รีวิว</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">order_channel</span><br><span style="color:#64748B;font-size:.74rem">LINE / โทรศัพท์ / หน้าร้าน / Delivery</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">customer_type</span><br><span style="color:#64748B;font-size:.74rem">ประเภทลูกค้า</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">wait_time_min</span><br><span style="color:#64748B;font-size:.74rem">เวลารอ (นาที)</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">price_mentioned_thb</span><br><span style="color:#64748B;font-size:.74rem">ราคาที่กล่าวถึง (บาท)</span></div>
+          <div style="font-size:.8rem;background:#F0F6FF;border-radius:6px;padding:7px 10px"><span style="color:var(--n);font-weight:700">topic_tags</span><br><span style="color:#64748B;font-size:.74rem">หัวข้อที่กล่าวถึง</span></div>
+          <div style="font-size:.8rem;background:#FFF0F0;border-radius:6px;padding:7px 10px"><span style="color:var(--r);font-weight:700">issue_area</span><br><span style="color:#64748B;font-size:.74rem">ประเภทปัญหา</span></div>
+          <div style="font-size:.8rem;background:#FFF0F0;border-radius:6px;padding:7px 10px"><span style="color:var(--r);font-weight:700">priority</span><br><span style="color:#64748B;font-size:.74rem">สูง / กลาง / ต่ำ</span></div>
+          <div style="font-size:.8rem;background:#F8FAFC;border-radius:6px;padding:7px 10px;grid-column:span 2"><span style="color:#334155;font-weight:700">review_text</span><br><span style="color:#64748B;font-size:.74rem">ข้อความรีวิวจริง</span></div>
+          <div style="font-size:.8rem;background:#F8FAFC;border-radius:6px;padding:7px 10px"><span style="color:#334155;font-weight:700">suggested_action</span><br><span style="color:#64748B;font-size:.74rem">คำแนะนำการตอบ</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HOW TO COPY ── -->
+    <div style="background:#003366;border-radius:12px;padding:16px 20px;margin-bottom:16px">
+      <div style="font-size:.88rem;font-weight:800;color:var(--s);margin-bottom:10px">📌 วิธี Copy จาก Excel / Google Sheets มาวาง ChatGPT</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;text-align:center">
+          <div style="font-size:.72rem;font-weight:800;color:#93C5FD;text-transform:uppercase;letter-spacing:.05em">วิธีที่ 1</div>
+          <div style="font-size:.82rem;color:white;margin-top:3px">เปิดไฟล์ Excel<br>Ctrl+A → Ctrl+C<br>วางใน ChatGPT เลย</div>
+        </div>
+        <div style="color:rgba(255,255,255,.4);font-size:1.4rem">|</div>
+        <div style="background:rgba(102,178,255,.2);border-radius:8px;padding:8px 14px;text-align:center;border:1px solid rgba(102,178,255,.4)">
+          <div style="font-size:.72rem;font-weight:800;color:#93C5FD;text-transform:uppercase;letter-spacing:.05em">วิธีที่ 2 (แนะนำ)</div>
+          <div style="font-size:.82rem;color:white;margin-top:3px">ChatGPT Plus / Claude Pro<br>แนบไฟล์ .xlsx หรือ .csv<br>ได้เลยโดยไม่ต้อง copy</div>
+        </div>
+        <div style="color:rgba(255,255,255,.4);font-size:1.4rem">|</div>
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;text-align:center">
+          <div style="font-size:.72rem;font-weight:800;color:#93C5FD;text-transform:uppercase;letter-spacing:.05em">วิธีที่ 3</div>
+          <div style="font-size:.82rem;color:white;margin-top:3px">บันทึกเป็น .csv<br>เปิดด้วย Notepad<br>Ctrl+A → Copy → วาง</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DATA PREVIEW ── -->
+    <div class="copy-sec" style="margin-bottom:14px">
+      <div class="copy-hdr"><h3>👁️ ตัวอย่างข้อมูล 5 แถวแรก</h3></div>
+      <div class="copy-body" style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:.72rem;white-space:nowrap">
+          <thead>
+            <tr style="background:#EEF6FF">
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">review_id</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">date</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">platform</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">rating</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">sentiment</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">menu_item</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">order_channel</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--r)">priority</th>
+              <th style="padding:6px 8px;border:1px solid #E2E8F0;color:var(--n)">review_text</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:5px 8px;border:1px solid #F1F5F9">R001</td><td style="padding:5px 8px;border:1px solid #F1F5F9">2026-05-07</td><td style="padding:5px 8px;border:1px solid #F1F5F9">Facebook</td><td style="padding:5px 8px;border:1px solid #F1F5F9;text-align:center">3</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#FEF3C7">กลาง</td><td style="padding:5px 8px;border:1px solid #F1F5F9">ข้าวหมูทอดกระเทียม</td><td style="padding:5px 8px;border:1px solid #F1F5F9">LINE</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#FEF3C7">กลาง</td><td style="padding:5px 8px;border:1px solid #F1F5F9;max-width:200px;overflow:hidden;text-overflow:ellipsis">เมนูเยอะดี แต่ช่วงเที่ยงรับออเดอร์ค่อนข้างช้า...</td></tr>
+            <tr style="background:#F8FAFC"><td style="padding:5px 8px;border:1px solid #F1F5F9">R002</td><td style="padding:5px 8px;border:1px solid #F1F5F9">2026-05-21</td><td style="padding:5px 8px;border:1px solid #F1F5F9">Facebook</td><td style="padding:5px 8px;border:1px solid #F1F5F9;text-align:center">5</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#D1FAE5">บวก</td><td style="padding:5px 8px;border:1px solid #F1F5F9">ข้าวผัดปู</td><td style="padding:5px 8px;border:1px solid #F1F5F9">LINE</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#D1FAE5">ต่ำ</td><td style="padding:5px 8px;border:1px solid #F1F5F9">พนักงานพูดจาดี เจ้าของร้านเป็นกันเอง...</td></tr>
+            <tr><td style="padding:5px 8px;border:1px solid #F1F5F9">R003</td><td style="padding:5px 8px;border:1px solid #F1F5F9">2026-05-24</td><td style="padding:5px 8px;border:1px solid #F1F5F9">Facebook</td><td style="padding:5px 8px;border:1px solid #F1F5F9;text-align:center">2</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#FEE2E2">ลบ</td><td style="padding:5px 8px;border:1px solid #F1F5F9">ต้มยำกุ้ง</td><td style="padding:5px 8px;border:1px solid #F1F5F9">โทรศัพท์</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#FEE2E2">สูง</td><td style="padding:5px 8px;border:1px solid #F1F5F9">รอนานมากช่วงเที่ยง คิวไม่ชัดเจน...</td></tr>
+            <tr style="background:#F8FAFC"><td style="padding:5px 8px;border:1px solid #F1F5F9">R004</td><td style="padding:5px 8px;border:1px solid #F1F5F9">2026-05-08</td><td style="padding:5px 8px;border:1px solid #F1F5F9">Facebook</td><td style="padding:5px 8px;border:1px solid #F1F5F9;text-align:center">5</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#D1FAE5">บวก</td><td style="padding:5px 8px;border:1px solid #F1F5F9">ต้มจืดเต้าหู้หมูสับ</td><td style="padding:5px 8px;border:1px solid #F1F5F9">โทรศัพท์</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#D1FAE5">ต่ำ</td><td style="padding:5px 8px;border:1px solid #F1F5F9">อร่อยมาก ต้มจืดเต้าหู้หมูสับ รสชาติเข้มข้น...</td></tr>
+            <tr><td style="padding:5px 8px;border:1px solid #F1F5F9">R006</td><td style="padding:5px 8px;border:1px solid #F1F5F9">2026-05-13</td><td style="padding:5px 8px;border:1px solid #F1F5F9">TikTok</td><td style="padding:5px 8px;border:1px solid #F1F5F9;text-align:center">5</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#D1FAE5">บวก</td><td style="padding:5px 8px;border:1px solid #F1F5F9">คะน้าหมูกรอบ</td><td style="padding:5px 8px;border:1px solid #F1F5F9">LINE</td><td style="padding:5px 8px;border:1px solid #F1F5F9;background:#D1FAE5">ต่ำ</td><td style="padding:5px 8px;border:1px solid #F1F5F9">สั่งมากินที่ออฟฟิศหลายรอบแล้ว ทุกคนชอบ...</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:.74rem;color:#64748B;margin-top:8px">... และอีก 55 แถว  |  เปิดไฟล์ xlsx หรือ csv เพื่อดูข้อมูลทั้งหมด</div>
+      </div>
+    </div>
+
+    <!-- ── PROMPTS ── -->
+    <div class="intro-card" style="margin-bottom:12px">
+      <h2>📋 Prompt พร้อมใช้ — ถามทีละอันต่อกันในช่อง chat เดิม</h2>
+      <p>Prompt 1 ใช้คู่กับข้อมูลทั้งหมด — Prompt 2 และ 3 พิมพ์ต่อเลย ไม่ต้องวางข้อมูลซ้ำ</p>
+    </div>
+
+    <div class="pset">
+      <div class="pset-hdr"><h3>🟢 ขั้นที่ 1 — วางข้อมูลทั้งตาราง + สรุปภาพรวม</h3><button class="copy-btn-g" id="cpc1" onclick="copyPmt('pc1','cpc1')">📋 Copy</button></div>
+      <div class="pset-body">
+        <div class="plabel">วาง Prompt นี้ก่อน แล้ววางข้อมูลตารางทั้งหมดต่อท้าย (หรือแนบไฟล์ .csv/.xlsx ถ้าใช้ ChatGPT Plus)</div>
+        <div class="pbox" id="pc1">นี่คือข้อมูลรีวิวลูกค้าจาก Social Media ร้านครัวป้าแดง ทั้งหมด 60 รายการ มี 17 คอลัมน์
+
+[วางข้อมูลตารางทั้งหมดตรงนี้ หรือแนบไฟล์ .csv]
+
+ช่วยวิเคราะห์และสรุปให้หน่อยนะครับ:
+1. คะแนนเฉลี่ย (rating) โดยรวมเป็นเท่าไหร่?
+2. แต่ละ platform ให้คะแนนเฉลี่ยต่างกันไหม?
+3. มีรีวิว priority สูงกี่รายการ และเกี่ยวกับเรื่องอะไรบ้าง?
+4. ช่องทางสั่งซื้อ (order_channel) ไหนมีปัญหามากที่สุด?
+5. สรุปเป็นตาราง: platform × คะแนนเฉลี่ย × จำนวนรีวิว<button class="pbtn" id="pp1" onclick="copyPmt('pc1','pp1')">copy</button></div>
+        <div class="exp-box"><h4>✅ ผลที่คาดว่าจะได้</h4><p>ได้ตารางสรุปสถิติที่ชัดเจน — เช่น Google Review อาจให้คะแนนสูงกว่า LINE OA, และ priority สูงส่วนใหญ่มาจากช่องทาง Delivery หรือ LINE</p></div>
+      </div>
+    </div>
+
+    <div class="pset">
+      <div class="pset-hdr"><h3>🟡 ขั้นที่ 2 — เจาะลึกเมนูและเวลารอ (พิมพ์ต่อในช่องเดิม)</h3><button class="copy-btn-g" id="cpc2" onclick="copyPmt('pc2','cpc2')">📋 Copy</button></div>
+      <div class="pset-body">
+        <div class="plabel">ไม่ต้องวางข้อมูลซ้ำ — AI จำตารางทั้งหมดไว้แล้ว</div>
+        <div class="pbox" id="pc2">จากข้อมูลเดิม ช่วยวิเคราะห์เพิ่มเติมครับ:
+
+1. เมนูไหนได้รีวิวมากที่สุด? และมีคะแนนเฉลี่ยเท่าไหร่?
+2. เมนูไหนมีรีวิวเชิงลบมากที่สุด?
+3. รีวิวที่ระบุ wait_time_min มีเวลารอเฉลี่ยเท่าไหร่? และกลุ่มลูกค้าไหนรอนานที่สุด?
+4. มีความสัมพันธ์ระหว่างเวลารอกับ rating ไหม?<button class="pbtn" id="pp2" onclick="copyPmt('pc2','pp2')">copy</button></div>
+        <div class="exp-box"><h4>✅ ผลที่คาดว่าจะได้</h4><p>AI คำนวณ average wait time, เปรียบเทียบ rating ของคนที่รอนาน vs สั้น และระบุเมนูที่มีปัญหาซ้ำ — ข้อมูลนี้หาเองด้วยตาแทบเป็นไปไม่ได้ใน 60 แถว</p></div>
+      </div>
+    </div>
+
+    <div class="pset">
+      <div class="pset-hdr"><h3>🔵 ขั้นที่ 3 — สร้าง Dashboard สรุปผล + Action Plan (พิมพ์ต่อ)</h3><button class="copy-btn-g" id="cpc3" onclick="copyPmt('pc3','cpc3')">📋 Copy</button></div>
+      <div class="pset-body">
+        <div class="plabel">โชว์ว่า AI ไม่แค่วิเคราะห์ แต่สร้าง report พร้อมใช้ได้เลย</div>
+        <div class="pbox" id="pc3">จากการวิเคราะห์ทั้งหมด ช่วยสรุปเป็น "รายงานผู้บริหาร" ให้หน่อยครับ
+
+ขอเป็นรูปแบบนี้:
+🔴 ปัญหาเร่งด่วน (priority สูง) — ต้องแก้ภายใน 1 สัปดาห์
+🟡 เรื่องที่ต้องติดตาม — แก้ภายใน 1 เดือน  
+🟢 จุดแข็งที่ต้องรักษา
+
+และช่วยแนะนำว่า AI ช่วยแก้ปัญหาข้อไหนได้บ้าง เช่น เขียน template ตอบ comment ลูกค้า หรือสร้างระบบติดตามคิว<button class="pbtn" id="pp3" onclick="copyPmt('pc3','pp3')">copy</button></div>
+        <div class="exp-box"><h4>✅ ผลที่คาดว่าจะได้</h4><p>ได้ executive summary พร้อมส่งให้เจ้าของร้าน และ AI แนะนำว่างานไหนทำต่อได้ฟรีโดยใช้ AI ต่อเนื่อง</p></div>
+      </div>
+    </div>
+
+    <!-- ── DOWNLOAD ── -->
+    <div style="background:#003366;border-radius:12px;padding:16px 20px;margin-bottom:6px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:800;color:var(--s);margin-bottom:3px">📥 ดาวน์โหลดไฟล์ข้อมูลตัวอย่าง</div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,.7)">60 รีวิว 17 คอลัมน์ — เปิดใน Excel / Google Sheets แล้ว copy ไปวาง ChatGPT ได้เลย</div>
+      </div>
+      <button onclick="downloadCSV()" style="background:var(--s);color:var(--nd);border:none;border-radius:8px;padding:10px 22px;font-family:'Sarabun',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;white-space:nowrap">⬇ Download .csv</button>
+    </div>
+
+  </div>
+</div><!-- end demoC -->
+
+<script>
+// ── Top nav
+function switchDemo(id, btn) {
+  document.querySelectorAll('.demo-section').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('demo' + id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo(0, 0);
+}
+// ── Sub tabs (Review)
+function switchSub(idx) {
+  document.querySelectorAll('.sub-tab').forEach((t, i) => t.classList.toggle('on', i === idx));
+  document.querySelectorAll('.a-panel').forEach((p, i) => p.classList.toggle('on', i === idx));
+  window.scrollTo(0, 80);
+}
+// ── Copy raw review
+function copyRaw(id, btnId) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    btn.textContent = '✓ คัดลอกแล้ว'; btn.classList.add('done');
+    setTimeout(() => { btn.textContent = '📋 Copy ทั้งหมด'; btn.classList.remove('done'); }, 2500);
+  });
+}
+// ── Copy prompt (review section)
+function copyPmt(textId, btnId) {
+  const text = document.getElementById(textId).innerText.replace(/^copy$/gm, '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = '✓'; btn.classList.add('done');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('done'); }, 2000);
+  });
+}
+// ── Copy break-even prompt
+function doCopy(textId, btnId) {
+  const text = document.getElementById(textId).innerText.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    btn.innerHTML = '✓ คัดลอกแล้ว'; btn.classList.add('done');
+    setTimeout(() => { btn.innerHTML = '⧉ Copy'; btn.classList.remove('done'); }, 2500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    const btn = document.getElementById(btnId);
+    btn.innerHTML = '✓ คัดลอกแล้ว'; btn.classList.add('done');
+    setTimeout(() => { btn.innerHTML = '⧉ Copy'; btn.classList.remove('done'); }, 2500);
+  });
+}
+const CSV_DATA = `review_id,review_date,platform,page_name,reviewer_alias,rating,sentiment,menu_item,order_channel,customer_type,wait_time_min,price_mentioned_thb,topic_tags,issue_area,priority,review_text,suggested_action
+R001,2026-05-07,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ปราณี รักอร่อย,3,กลาง,ข้าวหมูทอดกระเทียม,LINE,ลูกค้าประจำ,25,55,"เวลารอ/คิว, ระบบออเดอร์",การจัดการคิวและออเดอร์,กลาง,เมนูเยอะดี แต่ช่วงเที่ยงรับออเดอร์ค่อนข้างช้า โดยเฉพาะทาง LINE,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R002,2026-05-21,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,เจน หิวข้าว,5,บวก,ข้าวผัดปู,LINE,ผู้สูงอายุ,,,"บริการ, สถานที่/ที่นั่ง",จุดแข็ง/รักษามาตรฐาน,ต่ำ,พนักงานพูดจาดี เจ้าของร้านเป็นกันเอง อาหารร้อนและสดใหม่,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R003,2026-05-24,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ศิริพร หิวข้าว,2,ลบ,ต้มยำกุ้ง,โทรศัพท์,ครอบครัว,15,,เวลารอ/คิว,การจัดการคิวและออเดอร์,สูง,รอนานมากช่วงเที่ยง คิวไม่ชัดเจน คนมาทีหลังได้ก่อน,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R004,2026-05-08,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,บีม หิวข้าว,5,บวก,ต้มจืดเต้าหู้หมูสับ,โทรศัพท์,พนักงานออฟฟิศ,,65,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,อร่อยมาก ต้มจืดเต้าหู้หมูสับ รสชาติเข้มข้น ราคาไม่แพง สั่งแล้วประทับใจค่ะ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R005,2026-05-21,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ชัยวัฒน์ ออฟฟิศ,5,บวก,ต้มจืดเต้าหู้หมูสับ,LINE,ผู้สูงอายุ,,,"บริการ, สถานที่/ที่นั่ง",จุดแข็ง/รักษามาตรฐาน,ต่ำ,พนักงานพูดจาดี เจ้าของร้านเป็นกันเอง อาหารร้อนและสดใหม่,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R006,2026-05-13,TikTok Comment,ครัวป้าแดง — อาหารตามสั่ง,ปราณี สุขใจ,5,บวก,คะน้าหมูกรอบ,LINE,ลูกค้าประจำ,30,,ทั่วไป,จุดแข็ง/รักษามาตรฐาน,ต่ำ,สั่งมากินที่ออฟฟิศหลายรอบแล้ว ทุกคนชอบ โดยเฉพาะ คะน้าหมูกรอบ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R007,2026-05-14,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ชัยวัฒน์ สุขใจ,2,ลบ,ยำมะม่วง,เดลิเวอรี,ผู้สูงอายุ,15,,บรรจุภัณฑ์,บริการทั่วไป,สูง,แพ็กอาหารกลับบ้านไม่เรียบร้อย น้ำซุปรั่วใส่ถุง ต้องปรับปรุงครับ,ขอโทษ รับฟัง และติดตามลูกค้าหลังแก้ไข
+R008,2026-05-18,Google Review,ครัวป้าแดง — อาหารตามสั่ง,กัญญา ลูกค้าประจำ,1,ลบ,ราดหน้า,โทรศัพท์,ลูกค้าประจำ,12,60,บรรจุภัณฑ์,บริการทั่วไป,สูง,แพ็กอาหารกลับบ้านไม่เรียบร้อย น้ำซุปรั่วใส่ถุง ต้องปรับปรุงครับ,ขอโทษ รับฟัง และติดตามลูกค้าหลังแก้ไข
+R009,2026-05-25,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,อ้อม รีวิวจริง,4,บวก,ราดหน้า,โทรศัพท์,ลูกค้าใหม่,20,,ทั่วไป,จุดแข็ง/รักษามาตรฐาน,ต่ำ,สั่งมากินที่ออฟฟิศหลายรอบแล้ว ทุกคนชอบ โดยเฉพาะ ราดหน้า,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R010,2026-05-18,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,สมชาย ออฟฟิศ,5,บวก,ยำมะม่วง,โทรศัพท์,พนักงานออฟฟิศ,,,"ราคา/ความคุ้มค่า, เวลารอ/คิว",จุดแข็ง/รักษามาตรฐาน,ต่ำ,กินร้านนี้บ่อยมาก คุณภาพดีเหมือนเดิม ยำมะม่วง ทำเร็วและให้เยอะครับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R011,2026-05-19,Google Review,ครัวป้าแดง — อาหารตามสั่ง,ชัยวัฒน์ รักอร่อย,5,บวก,ต้มจืดเต้าหู้หมูสับ,หน้าร้าน,ลูกค้าใหม่,,,"ราคา/ความคุ้มค่า, เวลารอ/คิว",จุดแข็ง/รักษามาตรฐาน,ต่ำ,กินร้านนี้บ่อยมาก คุณภาพดีเหมือนเดิม ต้มจืดเต้าหู้หมูสับ ทำเร็วและให้เยอะครับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R012,2026-05-06,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,ฟ้า รีวิวจริง,4,บวก,ข้าวหมูทอดกระเทียม,เดลิเวอรี,ผู้สูงอายุ,35,,ทั่วไป,จุดแข็ง/รักษามาตรฐาน,ต่ำ,สั่งมากินที่ออฟฟิศหลายรอบแล้ว ทุกคนชอบ โดยเฉพาะ ข้าวหมูทอดกระเทียม,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R013,2026-05-10,Google Review,ครัวป้าแดง — อาหารตามสั่ง,พิมพ์ สุขใจ,4,บวก,ราดหน้า,เดลิเวอรี,ลูกค้าใหม่,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R014,2026-05-01,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ศิริพร สุขใจ,3,กลาง,ต้มจืดเต้าหู้หมูสับ,LINE,ลูกค้าใหม่,12,70,รสชาติ,มาตรฐานรสชาติ,กลาง,คุณภาพโดยรวมดี แต่บางวันรสชาติแกว่งนิดหน่อย อยากให้คงมาตรฐาน,กำหนดสูตรมาตรฐานและชิม QC เมนูหลักก่อนเสิร์ฟ
+R015,2026-05-03,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,นัท รีวิวจริง,4,บวก,ต้มยำกุ้ง,เดลิเวอรี,ครอบครัว,,50,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ชอบที่ปรับรสชาติได้ตามที่ขอ ต้มยำกุ้ง เผ็ดกำลังดี คุ้มกับราคา,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R016,2026-05-26,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,พิมพ์ หิวข้าว,2,ลบ,ผัดผักรวม,เดลิเวอรี,ลูกค้าประจำ,18,60,รสชาติ,มาตรฐานรสชาติ,สูง,อาหารมันเยอะขึ้น รสชาติไม่เหมือนเดิม อยากให้ร้านควบคุมคุณภาพมากกว่านี้,กำหนดสูตรมาตรฐานและชิม QC เมนูหลักก่อนเสิร์ฟ
+R017,2026-05-13,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,ชัยวัฒน์ ลูกค้าประจำ,5,บวก,ข้าวหมูทอดกระเทียม,หน้าร้าน,ลูกค้าใหม่,,50,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,อร่อยมาก ข้าวหมูทอดกระเทียม รสชาติเข้มข้น ราคาไม่แพง สั่งแล้วประทับใจค่ะ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R018,2026-05-15,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,แอม รีวิวจริง,5,บวก,ข้าวผัดปู,เดลิเวอรี,ลูกค้าประจำ,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ชอบที่ปรับรสชาติได้ตามที่ขอ ข้าวผัดปู เผ็ดกำลังดี คุ้มกับราคา,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R019,2026-05-03,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,อนุชา ลูกค้าประจำ,2,ลบ,กะเพราหมูสับ,เดลิเวอรี,ลูกค้าประจำ,40,,"รสชาติ, บริการ",มาตรฐานรสชาติ,สูง,วันนี้สั่ง กะเพราหมูสับ แล้วเค็มมากกว่าปกติ แจ้งไปแล้วไม่ได้แก้ให้ เสียความรู้สึกค่ะ,กำหนดสูตรมาตรฐานและชิม QC เมนูหลักก่อนเสิร์ฟ
+R020,2026-05-13,Google Review,ครัวป้าแดง — อาหารตามสั่ง,เอก รีวิวจริง,5,บวก,ยำมะม่วง,โทรศัพท์,ผู้สูงอายุ,,70,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,อร่อยมาก ยำมะม่วง รสชาติเข้มข้น ราคาไม่แพง สั่งแล้วประทับใจค่ะ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R021,2026-05-07,TikTok Comment,ครัวป้าแดง — อาหารตามสั่ง,วิชัย สุขใจ,4,บวก,ราดหน้า,หน้าร้าน,ครอบครัว,,,"ราคา/ความคุ้มค่า, เวลารอ/คิว",จุดแข็ง/รักษามาตรฐาน,ต่ำ,กินร้านนี้บ่อยมาก คุณภาพดีเหมือนเดิม ราดหน้า ทำเร็วและให้เยอะครับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R022,2026-05-06,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,บอย รักอร่อย,5,บวก,ผัดผักรวม,LINE,นักศึกษา,40,45,ทั่วไป,จุดแข็ง/รักษามาตรฐาน,ต่ำ,สั่งมากินที่ออฟฟิศหลายรอบแล้ว ทุกคนชอบ โดยเฉพาะ ผัดผักรวม,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R023,2026-05-20,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,อนุชา หิวข้าว,1,ลบ,ต้มยำกุ้ง,โทรศัพท์,ผู้สูงอายุ,18,,เวลารอ/คิว,การจัดการคิวและออเดอร์,สูง,รอนานมากช่วงเที่ยง คิวไม่ชัดเจน คนมาทีหลังได้ก่อน,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R024,2026-05-13,Google Review,ครัวป้าแดง — อาหารตามสั่ง,มาลี ลูกค้าประจำ,5,บวก,ผัดซีอิ๊ว,เดลิเวอรี,ครอบครัว,,45,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ชอบที่ปรับรสชาติได้ตามที่ขอ ผัดซีอิ๊ว เผ็ดกำลังดี คุ้มกับราคา,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R025,2026-05-18,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,บีม รักอร่อย,3,กลาง,คะน้าหมูกรอบ,โทรศัพท์,พนักงานออฟฟิศ,12,,"รสชาติ, เวลารอ/คิว",การจัดการคิวและออเดอร์,กลาง,อาหารอร่อยนะคะ แต่ช่วงเที่ยงรอนานไปหน่อย ประมาณ 12 นาที,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R026,2026-05-18,Google Review,ครัวป้าแดง — อาหารตามสั่ง,ชัยวัฒน์ ออฟฟิศ,4,บวก,แกงส้ม,หน้าร้าน,ผู้สูงอายุ,,,"บริการ, สถานที่/ที่นั่ง",จุดแข็ง/รักษามาตรฐาน,ต่ำ,พนักงานพูดจาดี เจ้าของร้านเป็นกันเอง อาหารร้อนและสดใหม่,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R027,2026-05-04,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,เจน ออฟฟิศ,5,บวก,ต้มยำกุ้ง,โทรศัพท์,ลูกค้าใหม่,,50,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ชอบที่ปรับรสชาติได้ตามที่ขอ ต้มยำกุ้ง เผ็ดกำลังดี คุ้มกับราคา,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R028,2026-05-16,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ดาว ออฟฟิศ,3,กลาง,ข้าวหมูทอดกระเทียม,LINE,ลูกค้าประจำ,20,,"เวลารอ/คิว, ระบบออเดอร์",การจัดการคิวและออเดอร์,กลาง,เมนูเยอะดี แต่ช่วงเที่ยงรับออเดอร์ค่อนข้างช้า โดยเฉพาะทาง LINE,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R029,2026-05-21,Google Review,ครัวป้าแดง — อาหารตามสั่ง,สมชาย สุขใจ,4,บวก,กะเพราหมูสับ,เดลิเวอรี,ผู้สูงอายุ,,,"ราคา/ความคุ้มค่า, เวลารอ/คิว",จุดแข็ง/รักษามาตรฐาน,ต่ำ,กินร้านนี้บ่อยมาก คุณภาพดีเหมือนเดิม กะเพราหมูสับ ทำเร็วและให้เยอะครับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R030,2026-05-12,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,บีม สุขใจ,2,ลบ,ยำมะม่วง,LINE,พนักงานออฟฟิศ,40,55,"รสชาติ, บริการ",มาตรฐานรสชาติ,สูง,วันนี้สั่ง ยำมะม่วง แล้วเค็มมากกว่าปกติ แจ้งไปแล้วไม่ได้แก้ให้ เสียความรู้สึกค่ะ,กำหนดสูตรมาตรฐานและชิม QC เมนูหลักก่อนเสิร์ฟ
+R031,2026-05-04,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,นัท รักอร่อย,5,บวก,ต้มจืดเต้าหู้หมูสับ,เดลิเวอรี,ลูกค้าใหม่,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R032,2026-05-01,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,แอม หิวข้าว,4,บวก,ยำมะม่วง,เดลิเวอรี,ลูกค้าใหม่,,,"บริการ, สถานที่/ที่นั่ง",จุดแข็ง/รักษามาตรฐาน,ต่ำ,พนักงานพูดจาดี เจ้าของร้านเป็นกันเอง อาหารร้อนและสดใหม่,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R033,2026-05-04,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,สมศักดิ์ ออฟฟิศ,3,กลาง,แกงส้ม,เดลิเวอรี,ลูกค้าใหม่,15,60,"รสชาติ, ความสะอาด, สถานที่/ที่นั่ง",สุขอนามัย/ความสะอาด,กลาง,อาหารอร่อย แต่ร้านค่อนข้างร้อนและมีโต๊ะจำกัด,เพิ่มรอบเช็ดโต๊ะ จัดการแมลงวัน และตรวจพื้นที่หน้าร้าน
+R034,2026-05-07,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,พิชัย ออฟฟิศ,4,บวก,ต้มจืดเต้าหู้หมูสับ,หน้าร้าน,ผู้สูงอายุ,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R035,2026-05-18,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,วิชัย สุขใจ,2,ลบ,ไข่เจียวหมูสับ,โทรศัพท์,ครอบครัว,30,55,บรรจุภัณฑ์,บริการทั่วไป,สูง,แพ็กอาหารกลับบ้านไม่เรียบร้อย น้ำซุปรั่วใส่ถุง ต้องปรับปรุงครับ,ขอโทษ รับฟัง และติดตามลูกค้าหลังแก้ไข
+R036,2026-05-26,Google Review,ครัวป้าแดง — อาหารตามสั่ง,อนุชา ออฟฟิศ,5,บวก,ข้าวผัดปู,หน้าร้าน,ลูกค้าประจำ,,65,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R037,2026-05-17,Google Review,ครัวป้าแดง — อาหารตามสั่ง,บอย ออฟฟิศ,4,บวก,ราดหน้า,LINE,ครอบครัว,,45,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,อร่อยมาก ราดหน้า รสชาติเข้มข้น ราคาไม่แพง สั่งแล้วประทับใจค่ะ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R038,2026-05-10,Google Review,ครัวป้าแดง — อาหารตามสั่ง,ชัยวัฒน์ รักอร่อย,3,กลาง,ผัดซีอิ๊ว,โทรศัพท์,ลูกค้าใหม่,12,55,"รสชาติ, ความสะอาด, สถานที่/ที่นั่ง",สุขอนามัย/ความสะอาด,กลาง,อาหารอร่อย แต่ร้านค่อนข้างร้อนและมีโต๊ะจำกัด,เพิ่มรอบเช็ดโต๊ะ จัดการแมลงวัน และตรวจพื้นที่หน้าร้าน
+R039,2026-05-24,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,มาลี ออฟฟิศ,4,บวก,ข้าวผัดปู,เดลิเวอรี,พนักงานออฟฟิศ,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R040,2026-05-20,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,อ้อม ลูกค้าประจำ,2,ลบ,ต้มจืดเต้าหู้หมูสับ,เดลิเวอรี,ผู้สูงอายุ,30,,เวลารอ/คิว,การจัดการคิวและออเดอร์,สูง,รอนานมากช่วงเที่ยง คิวไม่ชัดเจน คนมาทีหลังได้ก่อน,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R041,2026-05-17,Google Review,ครัวป้าแดง — อาหารตามสั่ง,อิง รักอร่อย,5,บวก,ยำมะม่วง,หน้าร้าน,ผู้สูงอายุ,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ชอบที่ปรับรสชาติได้ตามที่ขอ ยำมะม่วง เผ็ดกำลังดี คุ้มกับราคา,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R042,2026-05-05,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,อิง สุขใจ,3,กลาง,แกงส้ม,เดลิเวอรี,นักศึกษา,18,,"รสชาติ, ราคา/ความคุ้มค่า, สถานที่/ที่นั่ง",มาตรฐานรสชาติ,กลาง,รสชาติดี ราคาโอเค แต่ที่นั่งน้อย ถ้ามาตอนคนเยอะจะลำบากครับ,กำหนดสูตรมาตรฐานและชิม QC เมนูหลักก่อนเสิร์ฟ
+R043,2026-05-23,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,มาลี สุขใจ,1,ลบ,ข้าวผัดปู,LINE,นักศึกษา,18,,บรรจุภัณฑ์,บริการทั่วไป,สูง,แพ็กอาหารกลับบ้านไม่เรียบร้อย น้ำซุปรั่วใส่ถุง ต้องปรับปรุงครับ,ขอโทษ รับฟัง และติดตามลูกค้าหลังแก้ไข
+R044,2026-05-17,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,เอก ลูกค้าประจำ,5,บวก,ต้มจืดเต้าหู้หมูสับ,หน้าร้าน,ผู้สูงอายุ,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R045,2026-05-11,Google Review,ครัวป้าแดง — อาหารตามสั่ง,ชัยวัฒน์ ลูกค้าประจำ,4,บวก,ไข่เจียวหมูสับ,เดลิเวอรี,ลูกค้าใหม่,40,,ทั่วไป,จุดแข็ง/รักษามาตรฐาน,ต่ำ,สั่งมากินที่ออฟฟิศหลายรอบแล้ว ทุกคนชอบ โดยเฉพาะ ไข่เจียวหมูสับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R046,2026-05-09,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,อ้อม ลูกค้าประจำ,4,บวก,ราดหน้า,โทรศัพท์,ผู้สูงอายุ,,,"บริการ, สถานที่/ที่นั่ง",จุดแข็ง/รักษามาตรฐาน,ต่ำ,พนักงานพูดจาดี เจ้าของร้านเป็นกันเอง อาหารร้อนและสดใหม่,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R047,2026-05-03,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ปราณี รักอร่อย,5,บวก,ต้มจืดเต้าหู้หมูสับ,โทรศัพท์,ลูกค้าใหม่,,65,"บริการ, สถานที่/ที่นั่ง",จุดแข็ง/รักษามาตรฐาน,ต่ำ,พนักงานพูดจาดี เจ้าของร้านเป็นกันเอง อาหารร้อนและสดใหม่,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R048,2026-05-05,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,กิตติ สุขใจ,4,บวก,ต้มจืดเต้าหู้หมูสับ,เดลิเวอรี,ลูกค้าใหม่,,60,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R049,2026-05-23,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,สมศักดิ์ ออฟฟิศ,2,ลบ,ข้าวผัดปู,เดลิเวอรี,นักศึกษา,30,,เวลารอ/คิว,การจัดการคิวและออเดอร์,สูง,รอนานมากช่วงเที่ยง คิวไม่ชัดเจน คนมาทีหลังได้ก่อน,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R050,2026-05-24,Google Review,ครัวป้าแดง — อาหารตามสั่ง,พิชัย ลูกค้าประจำ,3,กลาง,ข้าวผัดปู,LINE,นักศึกษา,40,,"รสชาติ, ความสะอาด, สถานที่/ที่นั่ง",สุขอนามัย/ความสะอาด,กลาง,อาหารอร่อย แต่ร้านค่อนข้างร้อนและมีโต๊ะจำกัด,เพิ่มรอบเช็ดโต๊ะ จัดการแมลงวัน และตรวจพื้นที่หน้าร้าน
+R051,2026-05-22,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ฟ้า รักอร่อย,5,บวก,กะเพราหมูสับ,LINE,ครอบครัว,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ชอบที่ปรับรสชาติได้ตามที่ขอ กะเพราหมูสับ เผ็ดกำลังดี คุ้มกับราคา,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R052,2026-05-19,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,กัญญา สุขใจ,1,ลบ,ไข่เจียวหมูสับ,เดลิเวอรี,พนักงานออฟฟิศ,10,60,รสชาติ,มาตรฐานรสชาติ,สูง,อาหารมันเยอะขึ้น รสชาติไม่เหมือนเดิม อยากให้ร้านควบคุมคุณภาพมากกว่านี้,กำหนดสูตรมาตรฐานและชิม QC เมนูหลักก่อนเสิร์ฟ
+R053,2026-05-15,Google Review,ครัวป้าแดง — อาหารตามสั่ง,พิชัย สุขใจ,5,บวก,ข้าวผัดปู,เดลิเวอรี,นักศึกษา,,60,"ราคา/ความคุ้มค่า, เวลารอ/คิว",จุดแข็ง/รักษามาตรฐาน,ต่ำ,กินร้านนี้บ่อยมาก คุณภาพดีเหมือนเดิม ข้าวผัดปู ทำเร็วและให้เยอะครับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R054,2026-05-12,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,สุรีย์ รักอร่อย,5,บวก,กะเพราหมูสับ,หน้าร้าน,ลูกค้าประจำ,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,อร่อยมาก กะเพราหมูสับ รสชาติเข้มข้น ราคาไม่แพง สั่งแล้วประทับใจค่ะ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R055,2026-05-05,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,พิชัย ออฟฟิศ,5,บวก,คะน้าหมูกรอบ,LINE,ลูกค้าใหม่,15,,"ราคา/ความคุ้มค่า, เวลารอ/คิว",จุดแข็ง/รักษามาตรฐาน,ต่ำ,กินร้านนี้บ่อยมาก คุณภาพดีเหมือนเดิม คะน้าหมูกรอบ ทำเร็วและให้เยอะครับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R056,2026-05-10,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ฟ้า ลูกค้าประจำ,5,บวก,คะน้าหมูกรอบ,โทรศัพท์,นักศึกษา,12,,"ราคา/ความคุ้มค่า, เวลารอ/คิว",จุดแข็ง/รักษามาตรฐาน,ต่ำ,กินร้านนี้บ่อยมาก คุณภาพดีเหมือนเดิม คะน้าหมูกรอบ ทำเร็วและให้เยอะครับ,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R057,2026-05-19,Google Review,ครัวป้าแดง — อาหารตามสั่ง,ลินดา หิวข้าว,3,กลาง,ราดหน้า,หน้าร้าน,ครอบครัว,18,,"รสชาติ, เวลารอ/คิว",การจัดการคิวและออเดอร์,กลาง,อาหารอร่อยนะคะ แต่ช่วงเที่ยงรอนานไปหน่อย ประมาณ 18 นาที,แยกคิวหน้าร้าน/LINE แจ้งเวลารอ และแจ้งเมนูหมดทันที
+R058,2026-05-18,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ดาว ลูกค้าประจำ,5,บวก,ต้มยำกุ้ง,โทรศัพท์,ลูกค้าประจำ,,60,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ชอบที่ปรับรสชาติได้ตามที่ขอ ต้มยำกุ้ง เผ็ดกำลังดี คุ้มกับราคา,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R059,2026-05-15,Facebook Page,ครัวป้าแดง — อาหารตามสั่ง,ฟ้า รีวิวจริง,5,บวก,ข้าวผัดปู,โทรศัพท์,นักศึกษา,,,"รสชาติ, ราคา/ความคุ้มค่า",จุดแข็ง/รักษามาตรฐาน,ต่ำ,ราคาเหมาะสมกับปริมาณ รสชาติดี บรรยากาศร้านแบบบ้าน ๆ อบอุ่น,ขอบคุณลูกค้าและชวนกลับมาใช้บริการ/รีวิวซ้ำ
+R060,2026-05-19,LINE OA,ครัวป้าแดง — อาหารตามสั่ง,สุรีย์ ลูกค้าประจำ,3,กลาง,ผัดผักรวม,หน้าร้าน,ครอบครัว,30,60,"รสชาติ, ความสะอาด, สถานที่/ที่นั่ง",สุขอนามัย/ความสะอาด,กลาง,อาหารอร่อย แต่ร้านค่อนข้างร้อนและมีโต๊ะจำกัด,เพิ่มรอบเช็ดโต๊ะ จัดการแมลงวัน และตรวจพื้นที่หน้าร้าน`;
+
+function downloadCSV() {
+  const BOM = '﻿';
+  const blob = new Blob([BOM + CSV_DATA], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'social_media_review_demo_dataset.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
